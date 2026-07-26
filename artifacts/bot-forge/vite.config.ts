@@ -4,10 +4,9 @@ import { defineConfig } from 'vite';
 
 import runtimeErrorOverlay from '@replit/vite-plugin-runtime-error-modal';
 
+// PORT is required for dev server but not for production builds
 const rawPort = process.env.PORT;
-if (!rawPort) throw new Error('PORT environment variable is required.');
-const port = Number(rawPort);
-if (Number.isNaN(port) || port <= 0) throw new Error(`Invalid PORT: "${rawPort}"`);
+const port = rawPort ? Number(rawPort) : 3000;
 
 const basePath = process.env.BASE_PATH ?? '/bot-forge/';
 

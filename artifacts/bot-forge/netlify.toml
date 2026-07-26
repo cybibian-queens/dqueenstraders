@@ -1,27 +1,36 @@
 [build]
-  # Run from the artifacts/bot-forge directory (set as Base Directory in Netlify UI)
-  command    = "pnpm install --frozen-lockfile && pnpm run build"
-  publish    = "dist/public"
+  # The base directory in Netlify UI must be set to: artifacts/bot-forge
+  #
+  # Build strategy: navigate up to the repository root so pnpm finds the
+  # workspace config, install everything, then build just the bot-forge package.
+  #
+  # We pin pnpm via corepack so the version matches local development.
+  command = """
+    set -e
+    REPO_ROOT=$(cd ../../ && pwd)
+    echo "Repository root: $REPO_ROOT"
+
+    # Install pnpm via corepack (honours packageManager field or falls back)
+    npm install -g corepack 2>/dev/null || true
+    corepack enable
+    corepack prepare pnpm@9 --activate
+
+    # Install all workspace packages from the repo root
+    cd "$REPO_ROOT"
+    pnpm install --no-frozen-lockfile
+
+    # Build the bot-forge with BASE_PATH=/ for Netlify root deployment
+    BASE_PATH=/ APP_ENV=production pnpm --filter @workspace/bot-forge run build
+  """
+  publish = "dist/public"
 
 [build.environment]
-  NODE_VERSION = "20"
-  BASE_PATH    = "/"
-  APP_ENV      = "production"
+  NODE_VERSION      = "20"
+  BASE_PATH         = "/"
+  APP_ENV           = "production"
 
-# SPA fallback — all routes served by index.html
+# SPA fallback — every route is served by index.html
 [[redirects]]
   from   = "/*"
   to     = "/index.html"
   status = 200
-
-# OAuth callback page
-[[redirects]]
-  from   = "/callback"
-  to     = "/index.html"
-  status = 200
-
-[build.processing]
-  skip_processing = false
-
-[build.processing.html]
-  pretty_urls = true
