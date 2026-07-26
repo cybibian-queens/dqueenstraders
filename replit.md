@@ -1,45 +1,40 @@
-# [Project name]
+# Deriv Digits Trading App
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+A binary options/digits trading interface for the Deriv platform, ported from a Netlify-hosted Next.js app into Replit's pnpm workspace as a Vite + React app.
 
 ## Run & Operate
 
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
+- `pnpm --filter @workspace/trading-app run dev` — run the trading app (preview at `/`)
 - `pnpm run typecheck` — full typecheck across all packages
 - `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
 
 ## Stack
 
 - pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- Frontend: React 18 + Vite 7, Tailwind CSS v4, wouter (routing)
+- Shared lib: `@deriv/core` (workspace package at `lib/deriv-core`) — WebSocket, OAuth PKCE, auth storage
+- Design tokens: RGB-space CSS variables (`--primary: 211 131 1`) consumed via `rgb(var(--primary))`
 
 ## Where things live
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- `artifacts/trading-app/src/` — main app source (components, hooks, pages, lib)
+- `artifacts/trading-app/src/hooks/use-auth.ts` — OAuth PKCE auth hook wired to `@deriv/core`
+- `lib/deriv-core/src/` — shared Deriv auth, WebSocket, and account management package
+- `artifacts/trading-app/public/` — static assets (logo.png, icon.svg, app-config.json)
 
 ## Architecture decisions
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
-
-## Product
-
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Routing: wouter replaces `next/navigation` and `next/link`; base path from `import.meta.env.BASE_URL`
+- Env vars: all `NEXT_PUBLIC_*` converted to `VITE_*` (e.g. `VITE_DERIV_APP_ID`, `VITE_DERIV_REDIRECT_URI`)
+- `@deriv/core` is resolved as a workspace package — TypeScript reads source directly, no build step needed
+- `lib/deriv-core/tsconfig.json` includes `@types/react` as a devDependency for the React hook files
 
 ## User preferences
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- The source app was hosted on **Netlify** (not Vercel) — refer to it as the Netlify app.
 
 ## Gotchas
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
-
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+- `VITE_DERIV_APP_ID` and `VITE_DERIV_REDIRECT_URI` must be set for trading to work; `EnvCheck` shows a toast when missing (expected in dev without secrets configured).
+- `getWebSocketOTP(accountId, authInfo, clientId)` returns a WS URL string directly — not an object.
+- `refreshAccessToken(refreshToken, clientId)` takes the raw refresh token string, not the full `AuthInfo` object.

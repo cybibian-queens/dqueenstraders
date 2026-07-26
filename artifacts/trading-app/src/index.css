@@ -1,0 +1,203 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  /* Map semantic color tokens using the app's RGB space CSS variables */
+  --color-background: rgb(var(--background));
+  --color-foreground: rgb(var(--foreground));
+  --color-border: rgb(var(--border));
+  --color-ring: rgb(var(--ring));
+  --color-input: rgb(var(--input));
+
+  --color-card: rgb(var(--card));
+  --color-card-foreground: rgb(var(--card-foreground));
+
+  --color-popover: rgb(var(--popover));
+  --color-popover-foreground: rgb(var(--popover-foreground));
+
+  --color-primary: rgb(var(--primary));
+  --color-primary-foreground: rgb(var(--primary-foreground));
+
+  --color-secondary: rgb(var(--secondary));
+  --color-secondary-foreground: rgb(var(--secondary-foreground));
+
+  --color-muted: rgb(var(--muted));
+  --color-muted-foreground: rgb(var(--muted-foreground));
+
+  --color-accent: rgb(var(--accent));
+  --color-accent-foreground: rgb(var(--accent-foreground));
+
+  --color-destructive: rgb(var(--destructive));
+  --color-destructive-foreground: rgb(var(--destructive-foreground));
+
+  --color-chart-1: rgb(var(--chart-1));
+  --color-chart-2: rgb(var(--chart-2));
+  --color-chart-3: rgb(var(--chart-3));
+  --color-chart-4: rgb(var(--chart-4));
+  --color-chart-5: rgb(var(--chart-5));
+
+  /* Trading-specific */
+  --color-buy-background: rgb(var(--buy-background));
+  --color-buy-foreground: rgb(var(--buy-foreground));
+  --color-sell-background: rgb(var(--sell-background));
+  --color-sell-foreground: rgb(var(--sell-foreground));
+
+  --font-sans: var(--app-font-sans);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+:root {
+  --radius: 0.5rem;
+  --app-font-sans: 'Inter', sans-serif;
+
+  /* Light mode colors from Figma tokens */
+  --primary: 211 131 1;
+  --accent: 246 247 248;
+  --background: 255 255 255;
+  --border: 229 229 229;
+  --card: 255 255 255;
+  --card-foreground: 10 10 10;
+  --destructive: 230 25 14 / 0.72;
+  --destructive-foreground: 254 252 252;
+  --accent-foreground: 17 20 27;
+  --foreground: 10 10 10;
+  --input: 0 0 0 / 0.08;
+  --muted: 245 245 245;
+  --popover: 255 255 255;
+  --popover-foreground: 10 10 10;
+  --primary-foreground: 255 255 255;
+  --ring: 163 163 163;
+  --secondary: 255 255 255;
+  --secondary-foreground: 0 0 0;
+  --muted-foreground: 115 115 115;
+  --chart-1: 234 88 12;
+  --chart-2: 13 148 136;
+  --chart-3: 22 78 99;
+  --chart-4: 251 191 36;
+  --chart-5: 245 158 11;
+  --buy-background: 0 195 144;
+  --buy-foreground: 255 255 255;
+  --sell-background: 222 0 64;
+  --sell-foreground: 255 255 255;
+  --button-black: 0 0 0;
+  --button-black-foreground: 255 255 255;
+  --button-white: 255 255 255;
+  --button-white-foreground: 0 0 0;
+  --buy-20: 0 195 144 / 0.2;
+  --sell-20: 222 0 64 / 0.2;
+  --destructive-20: 220 38 38 / 0.2;
+  --destructive-40: 220 38 38 / 0.4;
+  --outline: 163 163 163 / 0.5;
+  --outline-10: 163 163 163 / 0.1;
+  --blue-500: 59 130 246;
+  --section-message: 147 197 253 / 0.16;
+  --border-focus: 0 0 0;
+  --border-focus-destructive: 196 0 0;
+  --button-blackwhite: 0 0 0;
+  --button-blackwhite-foreground: 255 255 255;
+  --checkmark-foreground: 255 255 255;
+  --checkmark: 10 10 10;
+  --alpha-10: 255 255 255 / 0.9;
+  --alpha-20: 255 255 255 / 0.8;
+  --alpha-30: 255 255 255 / 0.7;
+  --alpha-40: 255 255 255 / 0.6;
+  --alpha-50: 255 255 255 / 0.5;
+  --alpha-60: 255 255 255 / 0.4;
+  --alpha-70: 255 255 255 / 0.3;
+  --alpha-80: 255 255 255 / 0.2;
+  --alpha-90: 255 255 255 / 0.1;
+  --ring-offset: 255 255 255;
+  --alpha-5: 255 255 255 / 0.95;
+}
+
+.dark {
+  /* Dark mode colors from Figma tokens */
+  --primary: 211 131 1;
+  --accent-foreground: 246 247 248;
+  --background: 24 28 37;
+  --border: 255 255 255 / 0.1;
+  --card: 23 23 23;
+  --accent: 17 20 27;
+  --card-foreground: 255 255 255;
+  --destructive: 230 25 14 / 0.72;
+  --destructive-foreground: 254 252 252;
+  --foreground: 255 255 255;
+  --input: 255 255 255 / 0.08;
+  --muted: 38 38 38;
+  --popover: 38 38 38;
+  --popover-foreground: 255 255 255;
+  --primary-foreground: 255 255 255;
+  --ring: 115 115 115;
+  --secondary: 0 0 0;
+  --secondary-foreground: 255 255 255;
+  --muted-foreground: 163 163 163;
+  --chart-1: 29 78 216;
+  --chart-2: 0 195 144;
+  --chart-3: 245 158 11;
+  --chart-4: 168 85 247;
+  --chart-5: 222 0 64;
+  --button-black: 0 0 0;
+  --button-black-foreground: 255 255 255;
+  --button-white: 255 255 255;
+  --button-white-foreground: 0 0 0;
+  --buy-20: 0 195 144 / 0.4;
+  --sell-20: 222 0 64 / 0.4;
+  --destructive-20: 248 113 113 / 0.4;
+  --destructive-40: 248 113 113 / 0.6;
+  --outline: 115 115 115 / 0.5;
+  --outline-10: 115 115 115 / 0.2;
+  --blue-500: 37 99 235;
+  --section-message: 30 64 175 / 0.84;
+  --border-focus: 255 255 255;
+  --border-focus-destructive: 255 77 77;
+  --button-blackwhite: 255 255 255;
+  --button-blackwhite-foreground: 0 0 0;
+  --checkmark-foreground: 24 28 37;
+  --checkmark: 255 255 255;
+  --alpha-10: 0 0 0 / 0.9;
+  --alpha-20: 0 0 0 / 0.8;
+  --alpha-30: 0 0 0 / 0.7;
+  --alpha-40: 0 0 0 / 0.6;
+  --alpha-50: 0 0 0 / 0.5;
+  --alpha-60: 0 0 0 / 0.4;
+  --alpha-70: 0 0 0 / 0.3;
+  --alpha-80: 0 0 0 / 0.2;
+  --alpha-90: 0 0 0 / 0.1;
+  --ring-offset: 24 28 37;
+  --alpha-5: 0 0 0 / 0.95;
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* No-code drag hint animation */
+@keyframes nocode-drag-hint {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgb(var(--primary) / 0);
+    border-color: rgb(var(--border));
+  }
+  50% {
+    box-shadow: 0 0 0 3px rgb(var(--primary) / 0.35);
+    border-color: rgb(var(--primary));
+  }
+}
+.nocode-drag-hint {
+  animation: nocode-drag-hint 1s ease-in-out 2;
+}
+@media (prefers-reduced-motion: reduce) {
+  .nocode-drag-hint {
+    animation: none;
+  }
+}
