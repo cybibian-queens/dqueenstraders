@@ -1,0 +1,6 @@
+- [Bot Forge React 19 compat](bot-forge-react19.md) — @deriv-com/auth-client bundles React internally; must alias to a local shim to avoid ReactCurrentDispatcher crash
+- [Bot Forge JS/JSX rename rule](bot-forge-jsx-rename.md) — .js files with JSX from the ddbotforge zip must be renamed to .jsx or Vite/esbuild misparsels generics as JSX
+- [Bot Forge missing deps](bot-forge-deps.md) — packages not in the original zip that must be added: i18next, react-i18next, immutable, rxjs, redux, redux-thunk, lodash.debounce, history, object.fromentries, prop-types, ua-parser-js, usehooks-ts, react-loadable, react-div-100vh, @deriv/deriv-charts, @deriv/api-types, @deriv-com/quill-ui-next, trackjs
+- [Bot Forge SASS config](bot-forge-sass.md) — vite css.preprocessorOptions.scss.loadPaths must include src/ so @use 'components/shared/styles/themes' resolves
+- [Bot Forge router basename](bot-forge-router.md) — createBrowserRouter must receive basename: import.meta.env.BASE_URL to handle /bot-forge/ prefix
+- [React 19 pnpm override](react19-override.md) — workspace root package.json needs pnpm.overrides react/react-dom to 19.1.0 to prevent older dep copies loading

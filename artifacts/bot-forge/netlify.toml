@@ -1,0 +1,27 @@
+[build]
+  # Run from the artifacts/bot-forge directory (set as Base Directory in Netlify UI)
+  command    = "pnpm install --frozen-lockfile && pnpm run build"
+  publish    = "dist/public"
+
+[build.environment]
+  NODE_VERSION = "20"
+  BASE_PATH    = "/"
+  APP_ENV      = "production"
+
+# SPA fallback — all routes served by index.html
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
+
+# OAuth callback page
+[[redirects]]
+  from   = "/callback"
+  to     = "/index.html"
+  status = 200
+
+[build.processing]
+  skip_processing = false
+
+[build.processing.html]
+  pretty_urls = true
