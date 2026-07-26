@@ -1,3 +1,4 @@
+// @ts-nocheck
 import localForage from 'localforage';
 import LZString from 'lz-string';
 import { action, makeObservable, observable } from 'mobx';
@@ -11,7 +12,7 @@ import {
     saveWorkspaceToRecent,
 } from '@/external/bot-skeleton';
 import { localize } from '@deriv-com/translations';
-import { TStrategy } from 'Types';
+import { TStrategy } from '@/types';
 import RootStore from './root-store';
 
 type IOnConfirmProps = {

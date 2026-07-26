@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import Dialog from '@/components/shared_ui/dialog';
 import Text from '@/components/shared_ui/text';

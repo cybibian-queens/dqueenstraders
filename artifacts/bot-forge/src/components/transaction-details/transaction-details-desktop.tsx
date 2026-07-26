@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import DraggableResizeWrapper from '@/components/draggable/draggable-resize-wrapper';

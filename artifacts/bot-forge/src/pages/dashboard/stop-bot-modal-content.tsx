@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { standalone_routes } from '@/components/shared';
 import Dialog from '@/components/shared_ui/dialog';

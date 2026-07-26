@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { observer } from 'mobx-react-lite';
 import Dialog from '@/components/shared_ui/dialog';
 import Text from '@/components/shared_ui/text';

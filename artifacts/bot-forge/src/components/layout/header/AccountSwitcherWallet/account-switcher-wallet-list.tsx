@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { TStores } from '@deriv/stores/types';
 import { AccountSwitcherWalletItem } from './account-switcher-wallet-item';

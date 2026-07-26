@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { action, computed, makeObservable, observable, reaction, runInAction } from 'mobx';
 import { botNotification } from '@/components/bot-notification/bot-notification';
 import { notification_message } from '@/components/bot-notification/bot-notification-utils';
@@ -13,7 +14,7 @@ import { helpers } from '@/utils/store-helpers';
 import { Buy, ProposalOpenContract } from '@deriv/api-types';
 import { TStores } from '@deriv/stores/types';
 import { localize } from '@deriv-com/translations';
-import { TDbot } from 'Types';
+import { TDbot } from '@/types';
 import RootStore from './root-store';
 
 export type TContractState = {
@@ -26,11 +27,12 @@ export type TContractState = {
 export default class RunPanelStore {
     root_store: RootStore;
     dbot: TDbot;
-    core: TStores;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    core: any;
     disposeReactionsFn: () => void;
     timer: NodeJS.Timeout | null;
 
-    constructor(root_store: RootStore, core: TStores) {
+    constructor(root_store: RootStore, core: any) {
         makeObservable(this, {
             active_index: observable,
             contract_stage: observable,

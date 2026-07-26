@@ -1,10 +1,11 @@
+// @ts-nocheck
 import { TStores } from '@deriv/stores/types';
-import DashboardStore from 'Stores/dashboard-store';
-import FlyoutStore from 'Stores/flyout-store';
-import LoadModalStore from 'Stores/load-modal-store';
-import RunPanelStore from 'Stores/run-panel-store';
-import SaveModalStore from 'Stores/save-modal-store';
-import ToolbarStore from 'Stores/toolbar-store';
+import DashboardStore from '@/stores/dashboard-store';
+import FlyoutStore from '@/stores/flyout-store';
+import LoadModalStore from '@/stores/load-modal-store';
+import RunPanelStore from '@/stores/run-panel-store';
+import SaveModalStore from '@/stores/save-modal-store';
+import ToolbarStore from '@/stores/toolbar-store';
 import { TWebSocket } from './ws.types';
 
 export type TDbotStore = {

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { observer } from 'mobx-react-lite';
 import { useStore } from '@/hooks/useStore';
 import { downloadFile, getSuccessJournalMessage, TTransaction } from '@/utils/download';

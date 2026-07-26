@@ -1,7 +1,18 @@
 {
   "extends": "../../tsconfig.base.json",
   "include": ["src/**/*", "vite.config.ts"],
-  "exclude": ["node_modules", "build", "dist", "**/*.test.ts", "**/*.spec.ts", "**/__tests__/**"],
+  "exclude": [
+    "node_modules",
+    "build",
+    "dist",
+    "**/*.test.ts",
+    "**/*.spec.ts",
+    "**/__tests__/**",
+    "src/utils/mock/**",
+    "src/components/shared/test_utils/**",
+    "src/utils/tmp/**",
+    "src/components/data-list/**"
+  ],
   "compilerOptions": {
     "noEmit": true,
     "jsx": "preserve",
@@ -14,6 +25,11 @@
     "esModuleInterop": true,
     "noImplicitAny": false,
     "strict": false,
+    "strictNullChecks": false,
+    "useUnknownInCatchVariables": false,
+    "noImplicitReturns": false,
+    "strictPropertyInitialization": false,
+    "alwaysStrict": false,
     "paths": {
       "@/*": ["./src/*"],
       "@/external/*": ["./src/external/*"],

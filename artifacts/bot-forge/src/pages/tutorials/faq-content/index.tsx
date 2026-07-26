@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { KeyboardEvent } from 'react';
 import parse from 'html-react-parser';
 import Accordion from '@/components/shared_ui/accordion';

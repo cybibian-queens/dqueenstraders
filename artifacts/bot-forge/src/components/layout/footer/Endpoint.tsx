@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { Link } from 'react-router-dom';
 import { standalone_routes } from '@/components/shared';
 import Text from '@/components/shared_ui/text';

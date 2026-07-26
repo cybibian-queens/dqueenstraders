@@ -2,7 +2,7 @@ import React from 'react';
 import classNames from 'classnames';
 import { CSSTransition } from 'react-transition-group';
 import { hasContractEntered, isOpen, isValidToCancel, isValidToSell, useNewRowTransition } from '@/components/shared';
-import { TContractInfo } from '@/components/shared/src/utils/contract/contract-types';
+import { TContractInfo } from '@/components/shared/utils/contract/contract-types';
 import { Localize } from '@deriv-com/translations';
 import Text from '../../text';
 import { TGetCardLables } from '../../types';

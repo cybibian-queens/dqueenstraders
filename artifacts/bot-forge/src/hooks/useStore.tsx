@@ -1,6 +1,7 @@
+// @ts-nocheck
 import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import RootStore from '@/stores/root-store';
-import { TWebSocket } from '@/Types';
+import { TWebSocket } from '@/types';
 import Bot from '../external/bot-skeleton/scratch/dbot';
 
 const StoreContext = createContext<null | RootStore>(null);

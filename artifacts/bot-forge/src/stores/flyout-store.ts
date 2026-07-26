@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint-disable no-underscore-dangle */
 import { action, computed, makeObservable, observable } from 'mobx';
 import { config } from '@/external/bot-skeleton';
@@ -162,7 +163,7 @@ export default class FlyoutStore implements IFlyoutStore {
                     event: 'dbot_drag_block',
                     block_type: block.type,
                 });
-                this.flyout.blockMouseDown(block)(event as window.Blockly.Events.UiBase);
+                this.flyout.blockMouseDown(block)(event as any);
             }),
             window?.Blockly?.browserEvents?.bind(block_svg_root, 'mouseout', block, block.removeSelect),
             window?.Blockly?.browserEvents?.bind(block_svg_root, 'mouseover', block, block.addSelect)

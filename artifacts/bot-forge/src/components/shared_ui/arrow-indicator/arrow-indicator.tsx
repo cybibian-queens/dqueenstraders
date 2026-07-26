@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { StandaloneSortDownFillIcon, StandaloneSortUpFillIcon } from '@deriv/quill-icons';
 

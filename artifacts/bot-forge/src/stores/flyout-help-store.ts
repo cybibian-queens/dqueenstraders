@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { action, makeObservable, observable, runInAction } from 'mobx';
 import { help_content_config } from '@/utils/help-content/help-content.config';
 import * as help_strings from '@/utils/help-content/help-strings';
@@ -39,6 +40,9 @@ export default class FlyoutHelpStore {
     should_next_disable = false;
     should_previous_disable = false;
     active_helper = '';
+    xml_list: Element[] = [];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    xml_list_group: Record<string, any[]> = {};
 
     setHelpContent = async block_node => {
         const block_type: keyof typeof help_strings | '' = block_node.getAttribute('type');

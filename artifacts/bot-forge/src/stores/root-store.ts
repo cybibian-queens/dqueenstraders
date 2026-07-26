@@ -47,10 +47,14 @@ export default class RootStore {
     public client: ClientStore;
     public common: CommonStore;
 
-    core = {
-        ui: {},
-        client: {},
-        common: {},
+    core: {
+        ui: UiStore;
+        client: ClientStore;
+        common: CommonStore;
+    } = {
+        ui: {} as UiStore,
+        client: {} as ClientStore,
+        common: {} as CommonStore,
     };
 
     constructor(dbot: unknown) {

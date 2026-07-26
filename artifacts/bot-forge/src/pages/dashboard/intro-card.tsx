@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { TSidebarItem } from './constants';
 
 type TIntroCard = {

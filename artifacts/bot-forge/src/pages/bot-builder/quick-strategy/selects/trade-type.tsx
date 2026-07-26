@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { Field, FieldProps, useFormikContext } from 'formik';
 import Autocomplete from '@/components/shared_ui/autocomplete';

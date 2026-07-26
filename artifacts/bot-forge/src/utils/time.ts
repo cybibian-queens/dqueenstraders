@@ -1,5 +1,5 @@
 import moment, { Moment } from 'moment';
-import { TLocalize } from 'types';
+import { TLocalize } from '@/types';
 
 /**
  * Function that converts a numerical epoch value into a Moment instance

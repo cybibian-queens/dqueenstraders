@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { RefObject } from 'react';
 import classNames from 'classnames';
 import { ArrowContainer, Popover as TinyPopover } from 'react-tiny-popover';

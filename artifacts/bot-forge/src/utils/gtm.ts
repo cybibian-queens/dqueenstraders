@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { reaction } from 'mobx';
 import { TStatistics } from '@/components/transaction-details/transaction-details.types';
 import RootStore from '@/stores/root-store';

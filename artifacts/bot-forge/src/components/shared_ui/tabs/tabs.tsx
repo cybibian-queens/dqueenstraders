@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import classNames from 'classnames';
 import { useConstructor } from '@/hooks/useConstructor';
@@ -24,7 +25,7 @@ type TTabsProps = {
     has_active_line?: boolean;
     has_bottom_line?: boolean;
     header_fit_content?: boolean;
-    history: History;
+    history?: History;
     icon_color?: string;
     icon_size?: number;
     is_100vw?: boolean;

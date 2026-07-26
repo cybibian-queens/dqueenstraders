@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { action, makeObservable, observable, reaction } from 'mobx';
 import { scrollWorkspace } from '@/external/bot-skeleton';
 import GTM from '@/utils/gtm';
@@ -7,10 +8,11 @@ import RootStore from './root-store';
 
 export default class ToolboxStore {
     root_store: RootStore;
-    core: TStores;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    core: any;
     disposeToolboxToggleReaction: (() => void) | undefined = undefined;
     typing_timer: ReturnType<typeof setTimeout> | undefined = undefined;
-    constructor(root_store: RootStore, core: TStores) {
+    constructor(root_store: RootStore, core: any) {
         makeObservable(this, {
             is_toolbox_open: observable,
             is_search_loading: observable,

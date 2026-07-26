@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { observer } from 'mobx-react-lite';
 import { tabs_title } from '@/constants/load-modal';

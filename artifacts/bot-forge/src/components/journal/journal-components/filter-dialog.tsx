@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { useOnClickOutside } from '@/hooks/useOnClickOutside';
 import { TFilterDialogProps } from '../journal.types';

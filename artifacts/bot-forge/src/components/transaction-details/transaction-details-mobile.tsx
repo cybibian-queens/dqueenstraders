@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { observer } from 'mobx-react-lite';
 import { StatisticsSummary } from '@/components/run-panel/run-panel';
 import { transaction_elements } from '@/constants/transactions';

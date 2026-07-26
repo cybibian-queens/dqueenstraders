@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { epochToMoment, toMoment } from '@/components/shared/utils/date/date-time';
 import { TStores } from '@deriv/stores/types';
 

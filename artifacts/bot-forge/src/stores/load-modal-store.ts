@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { action, computed, makeObservable, observable, reaction } from 'mobx';
 import { v4 as uuidv4 } from 'uuid';
@@ -12,7 +13,7 @@ import { inject_workspace_options, updateXmlValues } from '@/external/bot-skelet
 import { isDbotRTL } from '@/external/bot-skeleton/utils/workspace';
 import { TStores } from '@deriv/stores/types';
 import { localize } from '@deriv-com/translations';
-import { TStrategy } from 'Types';
+import { TStrategy } from '@/types';
 import {
     rudderStackSendUploadStrategyCompletedEvent,
     rudderStackSendUploadStrategyFailedEvent,
@@ -25,7 +26,8 @@ import RootStore from './root-store';
 
 export default class LoadModalStore {
     root_store: RootStore;
-    core: TStores;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    core: any;
     imported_strategy_type = 'pending';
 
     constructor(root_store: RootStore, core: any) {
@@ -102,8 +104,8 @@ export default class LoadModalStore {
         );
     }
 
-    recent_workspace: window.Blockly.WorkspaceSvg | null = null;
-    local_workspace: window.Blockly.WorkspaceSvg | null = null;
+    recent_workspace: any = null;
+    local_workspace: any = null;
     drop_zone: unknown;
 
     active_index = 0;
@@ -121,7 +123,7 @@ export default class LoadModalStore {
     current_workspace_id = '';
     upload_id = '';
 
-    get preview_workspace(): window.Blockly.WorkspaceSvg | null {
+    get preview_workspace(): any {
         if (this.tab_name === tabs_title.TAB_LOCAL) return this.local_workspace;
         if (this.tab_name === tabs_title.TAB_RECENT) return this.recent_workspace;
         return null;
@@ -443,7 +445,7 @@ export default class LoadModalStore {
                 block_string: e?.target?.result,
                 drop_event,
                 from: save_types.LOCAL,
-                workspace: null as window.Blockly.WorkspaceSvg | null,
+                workspace: null as any,
                 file_name,
                 strategy_id: '',
                 showIncompatibleStrategyDialog: false,

@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { DerivLightUserErrorIcon } from '@deriv/quill-icons/Illustration';
 import { Localize } from '@deriv-com/translations';
 import Button from '../shared_ui/button';

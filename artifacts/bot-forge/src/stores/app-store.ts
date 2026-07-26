@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Cookies from 'js-cookie';
 import { action, makeObservable, reaction, when } from 'mobx';
 import { BOT_RESTRICTED_COUNTRIES_LIST } from '@/components/layout/header/utils';

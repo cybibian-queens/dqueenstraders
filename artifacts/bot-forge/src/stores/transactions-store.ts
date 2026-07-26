@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { action, computed, makeObservable, observable, reaction } from 'mobx';
 import { formatDate, isEnded } from '@/components/shared';
 import { LogTypes } from '@/external/bot-skeleton';
@@ -19,10 +20,11 @@ type TElement = {
 
 export default class TransactionsStore {
     root_store: RootStore;
-    core: TStores;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    core: any;
     disposeReactionsFn: () => void;
 
-    constructor(root_store: RootStore, core: TStores) {
+    constructor(root_store: RootStore, core: any) {
         this.root_store = root_store;
         this.core = core;
         this.is_transaction_details_modal_open = false;

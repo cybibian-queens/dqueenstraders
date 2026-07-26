@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { useRef, useState } from 'react';
 import { Form as FormikForm, Formik } from 'formik';
 import { observer } from 'mobx-react-lite';

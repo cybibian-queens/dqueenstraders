@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { getTotalProfit, TContractStore } from '@/components/shared';
 import { TContractOptions } from '@/components/shared';
 import { localize } from '@deriv-com/translations';

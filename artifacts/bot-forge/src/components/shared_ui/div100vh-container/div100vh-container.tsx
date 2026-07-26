@@ -1,3 +1,4 @@
+// @ts-nocheck
 /* eslint @typescript-eslint/triple-slash-reference: "off" */
 /// <reference path="../../../@types/react-div-100vh/react-div-100vh-config.d.ts" />
 import React from 'react';

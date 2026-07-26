@@ -17,7 +17,7 @@ export const MenuItems = observer(() => {
 
     if (!store) return null;
 
-    const client = store.client ?? {};
+    const client = store.client;
     const is_logged_in = client.is_logged_in ?? false;
     const getCurrency = client.getCurrency;
     const currency = getCurrency?.();
@@ -104,7 +104,7 @@ export const TradershubLink = observer(() => {
 
     if (!store) return null;
 
-    const client = store.client ?? {};
+    const client = store.client;
     const getCurrency = client.getCurrency;
     const currency = getCurrency?.();
 

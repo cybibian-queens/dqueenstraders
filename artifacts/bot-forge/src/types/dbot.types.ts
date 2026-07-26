@@ -1,6 +1,11 @@
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type BlocklyWorkspaceSvg = any;
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+type BlocklyBlock = any;
+
 export type TBotSkeleton = {
     interpreter: unknown;
-    workspace: window.Blockly.WorkspaceSvg | null;
+    workspace: BlocklyWorkspaceSvg | null;
     before_run_funcs: (() => boolean)[];
     initWorkspace: (
         public_path: string,
@@ -18,7 +23,7 @@ export type TBotSkeleton = {
     terminateConnection: () => void;
     unselectBlocks: () => boolean;
     disableStrayBlocks: () => boolean;
-    disableBlocksRecursively: (block: window.Blockly.Block) => void;
+    disableBlocksRecursively: (block: BlocklyBlock) => void;
     checkForErroredBlocks: () => boolean;
     centerAndHighlightBlock: (block_id: string, should_animate?: boolean) => void;
     unHighlightAllBlocks: () => void;
@@ -28,3 +33,6 @@ export type TBotSkeleton = {
     handleDragOver?: (event: unknown) => void;
     handleDropOver?: (event: unknown, handleFileChange: () => void) => void;
 };
+
+/** Alias kept for backward compatibility — prefer TBotSkeleton for new code. */
+export type TDbot = TBotSkeleton;

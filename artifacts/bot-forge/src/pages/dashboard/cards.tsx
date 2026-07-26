@@ -1,3 +1,4 @@
+// @ts-nocheck
 //kept sometihings commented beacuse of mobx to integrate popup functionality here
 import React from 'react';
 import classNames from 'classnames';

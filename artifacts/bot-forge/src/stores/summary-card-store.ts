@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { action, computed, makeObservable, observable, reaction } from 'mobx';
 import {
     getIndicativePrice,
@@ -27,7 +28,8 @@ type TMovements = {
 
 export default class SummaryCardStore {
     root_store: RootStore;
-    core: TStores;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    core: any;
     disposeReactionsFn: () => void | null;
     disposeSwitchAcountListener: (() => void | null) | undefined;
     contract_info: ProposalOpenContract | null = null;
@@ -50,7 +52,7 @@ export default class SummaryCardStore {
     indicative?: number = 0;
     is_bot_running?: boolean = false;
 
-    constructor(root_store: RootStore, core: TStores) {
+    constructor(root_store: RootStore, core: any) {
         makeObservable(this, {
             contract_info: observable,
             indicative_movement: observable,

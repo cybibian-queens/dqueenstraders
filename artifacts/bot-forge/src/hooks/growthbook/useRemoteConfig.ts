@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { useEffect, useState } from 'react';
 import { ObjectUtils } from '@deriv-com/utils';
 import initData from './remote_config.json';

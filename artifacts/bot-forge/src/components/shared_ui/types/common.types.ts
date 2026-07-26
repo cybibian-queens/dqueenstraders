@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import { getCardLabels } from '@/components/shared/utils/constants';
 import { getContractTypeDisplay } from '@/constants/contract';

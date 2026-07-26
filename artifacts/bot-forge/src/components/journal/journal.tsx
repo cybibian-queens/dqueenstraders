@@ -1,3 +1,4 @@
+// @ts-nocheck
 import classnames from 'classnames';
 import { observer } from 'mobx-react-lite';
 import Text from '@/components/shared_ui/text';

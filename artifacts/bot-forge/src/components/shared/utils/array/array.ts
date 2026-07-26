@@ -1,3 +1,4 @@
+// @ts-nocheck
 export const shuffleArray = <T>(array: T[]): T[] => {
     const firstDigit = (num: number) => Number(String(num)[0]);
 

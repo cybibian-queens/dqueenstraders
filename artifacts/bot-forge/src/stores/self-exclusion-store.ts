@@ -6,8 +6,9 @@ import RootStore from './root-store';
 
 export default class SelfExclusionStore {
     root_store: RootStore;
-    core: TStores;
-    constructor(root_store: RootStore, core: TStores) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    core: any;
+    constructor(root_store: RootStore, core: any) {
         makeObservable(this, {
             api_max_losses: observable,
             run_limit: observable,

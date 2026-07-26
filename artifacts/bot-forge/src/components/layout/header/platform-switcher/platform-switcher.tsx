@@ -20,7 +20,7 @@ const PlatformSwitcher = observer(() => {
     const account_param = urlParams.get('account');
 
     // Check if the account is a demo account from both client store and URL parameter
-    const client = store?.client ?? {};
+    const client = store?.client;
     const is_virtual = client.is_virtual || account_param === 'demo' || false;
 
     // Get the redirect URL from handleTraderHubRedirect

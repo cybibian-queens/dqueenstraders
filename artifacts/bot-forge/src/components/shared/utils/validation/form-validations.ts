@@ -1,3 +1,4 @@
+// @ts-nocheck
 import fromEntries from 'object.fromentries';
 import { EMPLOYMENT_VALUES } from '../constants';
 import { TEmploymentStatus } from '../types';

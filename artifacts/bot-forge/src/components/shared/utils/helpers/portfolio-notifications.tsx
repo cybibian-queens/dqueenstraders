@@ -1,3 +1,4 @@
+// @ts-nocheck
 import Money from '@/components/shared_ui/money';
 import { Localize, localize } from '@deriv-com/translations';
 

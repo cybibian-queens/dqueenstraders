@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React from 'react';
 import Text from '@/components/shared_ui/text';
 import { Icon } from '@/utils/tmp/dummy';

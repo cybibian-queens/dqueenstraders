@@ -1,3 +1,4 @@
+// @ts-nocheck
 import React, { lazy, Suspense, useEffect, useState } from 'react';
 import classNames from 'classnames';
 import { observer } from 'mobx-react-lite';

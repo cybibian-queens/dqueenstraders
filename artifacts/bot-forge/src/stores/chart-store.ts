@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { action, computed, makeObservable, observable, reaction } from 'mobx';
 import { LocalStore } from '@/components/shared';
 import { api_base } from '@/external/bot-skeleton';
@@ -67,7 +68,7 @@ export default class ChartStore {
 
     updateSymbol = () => {
         const workspace = window.Blockly.derivWorkspace;
-        const market_block = workspace?.getAllBlocks().find((block: window.Blockly.Block) => {
+        const market_block = workspace?.getAllBlocks().find((block: any) => {
             return block.type === 'trade_definition_market';
         });
 

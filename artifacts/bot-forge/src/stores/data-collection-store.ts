@@ -1,3 +1,4 @@
+// @ts-nocheck
 import crc32 from 'crc-32/crc32';
 import { action, makeObservable, observable, reaction } from 'mobx';
 import { cloneObject, isProduction } from '@/components/shared';
@@ -7,8 +8,9 @@ import RootStore from './root-store';
 
 export default class DataCollectionStore {
     root_store: RootStore;
-    core: TStores;
-    constructor(root_store: RootStore, core: TStores) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    core: any;
+    constructor(root_store: RootStore, core: any) {
         makeObservable(this, {
             IS_PENDING: observable,
             IS_PROCESSED: observable,

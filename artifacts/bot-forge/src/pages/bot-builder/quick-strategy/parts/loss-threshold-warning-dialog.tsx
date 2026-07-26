@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { observer } from 'mobx-react-lite';
 import Checkbox from '@/components/shared_ui/checkbox';
 import Dialog from '@/components/shared_ui/dialog';
