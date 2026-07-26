@@ -1,0 +1,39 @@
+# Root-level netlify.toml — takes precedence over any Netlify UI build settings.
+#
+# The Netlify UI "Build command" and "Publish directory" fields must be left
+# blank (or can have any value — this file overrides them).
+# The Netlify UI "Base directory" field must also be blank / set to the repo root.
+#
+# This builds ONLY the bot-forge Vite app, bypassing the workspace-wide
+# typecheck that lives in the root package.json "build" script.
+
+[build]
+  command = """
+    set -e
+
+    # Activate pnpm via corepack (matches local dev toolchain)
+    npm install -g corepack 2>/dev/null || true
+    corepack enable
+    corepack prepare pnpm@9 --activate
+
+    # Install all workspace dependencies from the repo root
+    pnpm install --no-frozen-lockfile
+
+    # Build ONLY bot-forge — its own build script is just:
+    #   vite build --config vite.config.ts
+    # which does NOT run typecheck, so TS errors in other packages are irrelevant.
+    BASE_PATH=/ APP_ENV=production pnpm --filter @workspace/bot-forge run build
+  """
+  # pnpm places the bot-forge output here (relative to repo root)
+  publish = "artifacts/bot-forge/dist/public"
+
+[build.environment]
+  NODE_VERSION = "20"
+  BASE_PATH    = "/"
+  APP_ENV      = "production"
+
+# SPA fallback — every client-side route is served by index.html
+[[redirects]]
+  from   = "/*"
+  to     = "/index.html"
+  status = 200
