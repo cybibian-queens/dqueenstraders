@@ -59,6 +59,7 @@ const Dialog = ({
     } = other_props;
 
     const wrapper_ref = React.useRef() as React.MutableRefObject<HTMLInputElement>;
+    const nodeRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
         if (is_visible && !!disableApp) {
@@ -118,6 +119,7 @@ const Dialog = ({
         (React.isValidElement(children) && typeof children?.props?.i18n_default_text === 'string');
     const dialog = (
         <CSSTransition
+            nodeRef={nodeRef}
             appear
             in={is_visible && !is_loading}
             timeout={50}
@@ -130,6 +132,7 @@ const Dialog = ({
             unmountOnExit
         >
             <div
+                ref={nodeRef}
                 className={classNames('dc-dialog__wrapper', className, {
                     'dc-dialog__wrapper--has-portal': !!portal_element_id,
                 })}

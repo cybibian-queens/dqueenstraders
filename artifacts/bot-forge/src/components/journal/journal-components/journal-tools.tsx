@@ -15,6 +15,7 @@ const JournalTools = ({
     toggleFilterDialog,
 }: TJournalToolsProps) => {
     const toggle_ref = React.useRef<HTMLDivElement>(null);
+    const filter_node_ref = React.useRef<HTMLDivElement>(null);
 
     return (
         <>
@@ -28,6 +29,7 @@ const JournalTools = ({
                 </div>
             </div>
             <CSSTransition
+                nodeRef={filter_node_ref}
                 in={is_filter_dialog_visible}
                 classNames={{
                     enter: 'filter-dialog--enter',
@@ -37,14 +39,17 @@ const JournalTools = ({
                 timeout={150}
                 unmountOnExit
             >
-                <FilterDialog
-                    toggle_ref={toggle_ref}
-                    checked_filters={checked_filters}
-                    filters={filters}
-                    filterMessage={filterMessage}
-                    is_filter_dialog_visible={is_filter_dialog_visible}
-                    toggleFilterDialog={toggleFilterDialog}
-                />
+                {/* wrapper div required: CSSTransition nodeRef must point to a DOM element */}
+                <div ref={filter_node_ref}>
+                    <FilterDialog
+                        toggle_ref={toggle_ref}
+                        checked_filters={checked_filters}
+                        filters={filters}
+                        filterMessage={filterMessage}
+                        is_filter_dialog_visible={is_filter_dialog_visible}
+                        toggleFilterDialog={toggleFilterDialog}
+                    />
+                </div>
             </CSSTransition>
         </>
     );

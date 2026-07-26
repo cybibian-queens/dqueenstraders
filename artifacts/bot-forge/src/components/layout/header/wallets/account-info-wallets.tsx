@@ -118,6 +118,7 @@ const AccountInfoWallets = observer(({ is_dialog_on, toggleDialog }: TAccountInf
     const { account_switcher_disabled_message } = ui;
     const { data: wallet_list } = useStoreWalletAccountsList();
     const { isDesktop } = useDevice();
+    const acc_switcher_node_ref = React.useRef<HTMLDivElement>(null);
 
     const balance = all_accounts_balance?.accounts?.[loginid ?? '']?.balance;
     const active_account = accounts?.[loginid ?? ''];
@@ -172,6 +173,7 @@ const AccountInfoWallets = observer(({ is_dialog_on, toggleDialog }: TAccountInf
             </AccountInfoWrapper>
             {isDesktop ? (
                 <CSSTransition
+                    nodeRef={acc_switcher_node_ref}
                     in={is_dialog_on}
                     timeout={200}
                     classNames={{
@@ -181,7 +183,7 @@ const AccountInfoWallets = observer(({ is_dialog_on, toggleDialog }: TAccountInf
                     }}
                     unmountOnExit
                 >
-                    <div className='acc-switcher__wrapper acc-switcher__wrapper--wallets'>
+                    <div ref={acc_switcher_node_ref} className='acc-switcher__wrapper acc-switcher__wrapper--wallets'>
                         <AccountSwitcherWallet is_visible={is_dialog_on} toggle={toggleDialog} residence={residence} />
                     </div>
                 </CSSTransition>

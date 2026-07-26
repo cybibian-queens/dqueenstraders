@@ -26,6 +26,7 @@ const ContractCardDialog = React.forwardRef(
 
         const dialog = (
             <CSSTransition
+                nodeRef={ref as React.RefObject<HTMLDivElement>}
                 in={is_visible}
                 classNames={{
                     enter: 'dc-contract-card-dialog--enter',

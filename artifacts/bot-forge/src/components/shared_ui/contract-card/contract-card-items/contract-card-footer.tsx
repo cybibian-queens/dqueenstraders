@@ -37,6 +37,7 @@ const CardFooter = ({
     should_show_transition,
 }: TCardFooterPropTypes) => {
     const { in_prop } = useNewRowTransition(!!should_show_transition);
+    const nodeRef = React.useRef<HTMLDivElement>(null);
 
     const is_valid_to_cancel = isValidToCancel(contract_info);
 
@@ -47,6 +48,7 @@ const CardFooter = ({
 
     return (
         <CSSTransition
+            nodeRef={nodeRef}
             in={in_prop}
             timeout={should_show_transition ? 250 : 0}
             classNames={
@@ -61,7 +63,7 @@ const CardFooter = ({
             onEntered={onFooterEntered}
             unmountOnExit
         >
-            <div className='dc-contract-card-item__footer'>
+            <div ref={nodeRef} className='dc-contract-card-item__footer'>
                 {is_multiplier ? (
                     <div
                         className={classNames('dc-contract-card__sell-button', {

@@ -73,6 +73,7 @@ const PageOverlay = ({
     if (portal_id) {
         return ReactDOM.createPortal(
             <CSSTransition
+                nodeRef={page_overlay_ref}
                 appear
                 in={is_open}
                 timeout={250}

@@ -40,6 +40,7 @@ const MobileDialog = (props: React.PropsWithChildren<TMobileDialog>) => {
         learn_more_banner,
     } = props;
 
+    const nodeRef = React.useRef<HTMLDivElement>(null);
     const footer_ref = React.useRef<HTMLDivElement>(null);
     const [footer_height, setHeight] = React.useState(0);
     React.useLayoutEffect(() => {
@@ -88,6 +89,7 @@ const MobileDialog = (props: React.PropsWithChildren<TMobileDialog>) => {
     if (!portal_element) return null;
     return ReactDOM.createPortal(
         <CSSTransition
+            nodeRef={nodeRef}
             appear
             in={visible}
             timeout={250}
@@ -98,7 +100,7 @@ const MobileDialog = (props: React.PropsWithChildren<TMobileDialog>) => {
             }}
             unmountOnExit
         >
-            <div data-testid='dt_mobile_dialog' className='dc-mobile-dialog' onClick={handleClick}>
+            <div ref={nodeRef} data-testid='dt_mobile_dialog' className='dc-mobile-dialog' onClick={handleClick}>
                 <Div100vhContainer
                     className={classNames('dc-mobile-dialog__container', {
                         'dc-mobile-dialog__container--has-scroll': props.has_content_scroll,

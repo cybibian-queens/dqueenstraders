@@ -41,6 +41,8 @@ type TModalElement = {
     title?: string | React.ReactNode;
     toggleModal?: (e?: React.MouseEvent<HTMLElement> | React.KeyboardEvent<HTMLElement>) => void;
     width?: string;
+    /** Internal: ref forwarded from CSSTransition nodeRef so findDOMNode is never called (React 19) */
+    _nodeRef?: React.RefObject<HTMLDivElement | null>;
 };
 
 const ModalElement = ({
@@ -72,11 +74,14 @@ const ModalElement = ({
     title,
     toggleModal,
     width,
+    _nodeRef,
 }: React.PropsWithChildren<TModalElement>) => {
     const el_ref = React.useRef(document.createElement('div'));
     const el_portal_node = portalId && document.getElementById(portalId);
     const modal_root_ref = React.useRef(el_portal_node || document.getElementById(portalId));
-    const wrapper_ref = React.useRef<HTMLDivElement>(null);
+    // Use the ref forwarded from CSSTransition nodeRef when provided (avoids findDOMNode in React 19)
+    const internal_wrapper_ref = React.useRef<HTMLDivElement>(null);
+    const wrapper_ref = (_nodeRef ?? internal_wrapper_ref) as React.RefObject<HTMLDivElement>;
 
     const portal_elements_selector = [
         '.dc-datepicker__picker',
@@ -272,8 +277,12 @@ const Modal = ({
     transition_timeout,
     toggleModal,
     width,
-}: React.PropsWithChildren<TModal>) => (
+}: React.PropsWithChildren<TModal>) => {
+    // nodeRef avoids ReactDOM.findDOMNode which was removed in React 19
+    const nodeRef = React.useRef<HTMLDivElement>(null);
+    return (
     <CSSTransition
+        nodeRef={nodeRef}
         appear
         in={is_open}
         timeout={transition_timeout || 250}
@@ -288,6 +297,7 @@ const Modal = ({
         onExited={onExited}
     >
         <ModalElement
+            _nodeRef={nodeRef}
             className={className}
             close_icon_color={close_icon_color}
             should_header_stick_body={should_header_stick_body}
@@ -319,7 +329,8 @@ const Modal = ({
             {children}
         </ModalElement>
     </CSSTransition>
-);
+    );
+};
 
 Modal.Body = Body;
 Modal.Footer = Footer;

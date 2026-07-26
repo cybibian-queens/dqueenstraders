@@ -50,6 +50,7 @@ const ContractCardHeader = ({
     onClickSell,
     server_time,
 }: TContractCardHeaderProps) => {
+    const sell_btn_ref = React.useRef<HTMLDivElement>(null);
     const current_tick = contract_info.tick_count ? getCurrentTick(contract_info) : null;
     const {
         growth_rate,
@@ -142,6 +143,7 @@ const ContractCardHeader = ({
                 <MobileWrapper>
                     {is_valid_to_sell ? (
                         <CSSTransition
+                            nodeRef={sell_btn_ref}
                             in={!!is_valid_to_sell}
                             timeout={250}
                             classNames={{
@@ -151,7 +153,7 @@ const ContractCardHeader = ({
                             }}
                             unmountOnExit
                         >
-                            <div className='dc-contract-card__sell-button-mobile'>
+                            <div ref={sell_btn_ref} className='dc-contract-card__sell-button-mobile'>
                                 <Button
                                     id={`dc_contract_card_${id}_button`}
                                     className={classNames('dc-btn--sell', {

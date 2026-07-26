@@ -54,10 +54,12 @@ const ResultOverlay = ({
     result,
 }: TResultOverlayProps) => {
     const is_contract_won = result === 'won';
+    const nodeRef = React.useRef<HTMLDivElement>(null);
 
     return (
         <React.Fragment>
             <CSSTransition
+                nodeRef={nodeRef}
                 in={is_visible}
                 timeout={250}
                 classNames={{
@@ -68,6 +70,7 @@ const ResultOverlay = ({
                 unmountOnExit
             >
                 <div
+                    ref={nodeRef}
                     id={`dc_contract_card_${contract_id}_result`}
                     className={classNames('dc-contract-card__result', {
                         'dc-result__positions-overlay': is_positions,
