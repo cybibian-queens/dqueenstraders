@@ -21,14 +21,14 @@ const PlatformSwitcher = observer(() => {
 
     // Check if the account is a demo account from both client store and URL parameter
     const client = store?.client;
-    const is_virtual = client.is_virtual || account_param === 'demo' || false;
+    const is_virtual = client?.is_virtual || account_param === 'demo' || false;
 
     // Get the redirect URL from handleTraderHubRedirect
     const redirectParams = {
         product_type: 'cfds' as const,
         has_wallet,
         is_virtual,
-        residence: client.residence,
+        residence: client?.residence,
         hubEnabledCountryList,
     };
     const redirect_url_str = handleTraderHubRedirect(redirectParams) || standalone_routes.traders_hub;
@@ -40,7 +40,7 @@ const PlatformSwitcher = observer(() => {
         if (is_virtual) {
             // For demo accounts, set the account parameter to 'demo'
             redirect_url.searchParams.set('account', 'demo');
-        } else if (client.currency) {
+        } else if (client?.currency) {
             // For real accounts, set the account parameter to the currency
             redirect_url.searchParams.set('account', client.currency);
         }
