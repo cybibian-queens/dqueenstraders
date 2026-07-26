@@ -1,7 +1,7 @@
 import { LocalStorageConstants, LocalStorageUtils, URLUtils } from '@deriv-com/utils';
 import { isStaging } from '../url/helpers';
 
-export const APP_IDS = {
+export const APP_IDS: Record<string, string | number> = {
     LOCALHOST: 36300,
     TMP_STAGING: 64584,
     STAGING: 29934,
@@ -10,9 +10,8 @@ export const APP_IDS = {
     PRODUCTION: 65555,
     PRODUCTION_BE: 65556,
     PRODUCTION_ME: 65557,
-    // DQueens Traders custom deployment — replace with your registered Deriv app ID
-    // from https://developers.deriv.com/ once approved
-    DQUEENS_TRADERS: 36300,
+    // DQueens Traders — registered Deriv app ID from developers.deriv.com
+    DQUEENS_TRADERS: '33Tz0wxlDfb62ywDERsKo',
 };
 
 export const livechat_license_id = 12049137;
