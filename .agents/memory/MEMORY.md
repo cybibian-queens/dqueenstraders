@@ -4,3 +4,4 @@
 - [Bot Forge SASS config](bot-forge-sass.md) — vite css.preprocessorOptions.scss.loadPaths must include src/ so @use 'components/shared/styles/themes' resolves
 - [Bot Forge router basename](bot-forge-router.md) — createBrowserRouter must receive basename: import.meta.env.BASE_URL to handle /bot-forge/ prefix
 - [React 19 pnpm override](react19-override.md) — workspace root package.json needs pnpm.overrides react/react-dom to 19.1.0 to prevent older dep copies loading
+- [Bot Forge Netlify source shims](bot-forge-netlify-shims.md) — generic tmp ignore rules can exclude required imported source files from clean Netlify clones
