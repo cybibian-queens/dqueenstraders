@@ -62,7 +62,10 @@ export default defineConfig({
       'Stores': path.resolve(import.meta.dirname, 'src/stores'),
       // Replace @deriv-com/auth-client with a React-19-compatible shim
       '@deriv-com/auth-client': path.resolve(import.meta.dirname, 'src/utils/auth-client-shim.tsx'),
+      // Quill UI bundles a React 18 JSX runtime that crashes under React 19.
+      '@deriv-com/quill-ui': path.resolve(import.meta.dirname, 'src/utils/quill-ui-shim.tsx'),
       react: path.resolve('./node_modules/react'),
+      'react-dom/server': path.resolve('./node_modules/react-dom/server.browser.js'),
       'react-dom': path.resolve('./node_modules/react-dom'),
     },
     dedupe: ['react', 'react-dom'],

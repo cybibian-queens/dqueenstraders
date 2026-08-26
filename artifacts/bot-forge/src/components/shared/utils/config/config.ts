@@ -1,7 +1,7 @@
 import { LocalStorageConstants, LocalStorageUtils, URLUtils } from '@deriv-com/utils';
 import { isStaging } from '../url/helpers';
 
-export const APP_IDS: Record<string, string | number> = {
+export const APP_IDS: Record<string, number> = {
     LOCALHOST: 36300,
     TMP_STAGING: 64584,
     STAGING: 29934,
@@ -10,8 +10,8 @@ export const APP_IDS: Record<string, string | number> = {
     PRODUCTION: 65555,
     PRODUCTION_BE: 65556,
     PRODUCTION_ME: 65557,
-    // DQueens Traders — registered Deriv app ID from developers.deriv.com
-    DQUEENS_TRADERS: '33Tz0wxlDfb62ywDERsKo',
+    // Deriv's WebSocket API requires a numeric app_id. OAuth client IDs are not valid here.
+    DQUEENS_TRADERS: 36300,
 };
 
 export const livechat_license_id = 12049137;
@@ -42,14 +42,17 @@ export const isTestLink = () => {
     return (
         window.location.origin?.includes('.binary.sx') ||
         window.location.origin?.includes('bot-65f.pages.dev') ||
+        window.location.hostname.endsWith('.replit.dev') ||
         isLocal()
     );
 };
 
-export const isLocal = () => /localhost(:\d+)?$/i.test(window.location.hostname);
+export const isLocal = () => /^(localhost|127\.0\.0\.1)(:\d+)?$/i.test(window.location.hostname);
 
 const getDefaultServerURL = () => {
-    if (isTestLink()) {
+    const current_domain = getCurrentProductionDomain();
+
+    if (isTestLink() || current_domain === 'dqueenstraders.netlify.app') {
         return 'ws.derivws.com';
     }
 
