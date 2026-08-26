@@ -3,6 +3,8 @@
 # compiled output
 dist
 tmp
+!/artifacts/bot-forge/src/utils/tmp/
+!/artifacts/bot-forge/src/utils/tmp/dummy.tsx
 out-tsc
 *.tsbuildinfo
 .expo
