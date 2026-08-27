@@ -91,6 +91,7 @@ export interface UseAuthReturn {
   activeAccount: DerivAccount | null;
   activeAccountId: string | null;
   wsUrl: string | undefined;
+  updateAccountBalance: (accountId: string, balance: string | number) => void;
   login: () => Promise<void>;
   signUp: () => Promise<void>;
   logout: () => void;
@@ -108,7 +109,6 @@ export function useAuth(): UseAuthReturn {
   const clientId = getClientId();
 
   const fetchOTPUrl = useCallback(async (accountId: string, authInfo: AuthInfo): Promise<string> => {
-    // getWebSocketOTP returns the full WS URL directly
     return getWebSocketOTP(accountId, authInfo, clientId);
   }, [clientId]);
 
@@ -124,7 +124,6 @@ export function useAuth(): UseAuthReturn {
         try {
           setAuthState('authenticating');
           const config = getAuthConfig();
-          // handleOAuthCallback takes the current page URL + config
           const authInfo = await handleOAuthCallback(window.location.href, config);
           const fetchedAccounts = await fetchAccounts(authInfo, clientId);
           const savedLoginId = getActiveLoginId();
@@ -146,7 +145,6 @@ export function useAuth(): UseAuthReturn {
         return;
       }
 
-      // Try to restore session from stored auth info
       const authInfo = getAuthInfo();
       if (!authInfo) {
         setAuthState('unauthenticated');
@@ -155,7 +153,6 @@ export function useAuth(): UseAuthReturn {
 
       try {
         setAuthState('authenticating');
-        // refreshAccessToken takes the refresh token string + clientId
         const refreshed = await refreshAccessToken(authInfo.refresh_token, clientId);
         const fetchedAccounts = await fetchAccounts(refreshed, clientId);
         const savedLoginId = getActiveLoginId() ?? getDerivAccounts()?.[0]?.account_id;
@@ -177,6 +174,15 @@ export function useAuth(): UseAuthReturn {
 
     init();
   }, [fetchOTPUrl, clientId]);
+
+  const updateAccountBalance = useCallback((accountId: string, balance: string | number) => {
+    const nextBalance = String(balance);
+    setAccounts((current) =>
+      current.map((account) =>
+        account.account_id === accountId ? { ...account, balance: nextBalance } : account
+      )
+    );
+  }, []);
 
   const login = useCallback(async () => {
     const config = await getAuthConfigWithReferral();
@@ -225,6 +231,7 @@ export function useAuth(): UseAuthReturn {
     activeAccount,
     activeAccountId,
     wsUrl,
+    updateAccountBalance,
     login,
     signUp,
     logout,
