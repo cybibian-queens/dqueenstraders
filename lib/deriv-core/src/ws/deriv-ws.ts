@@ -15,6 +15,7 @@ interface DesiredSubscription {
   handler: MessageHandler;
   subscriptionId: string | null;
   active: boolean;
+  restoring: boolean;
 }
 
 /**
@@ -113,7 +114,13 @@ export class DerivWS {
         this.subscriptionHandlers.clear();
         for (const subscription of this.desiredSubscriptions.values()) {
           subscription.subscriptionId = null;
+          subscription.restoring = false;
         }
+        // Requests tied to the closed socket cannot be completed safely on a new socket.
+        for (const pending of this.pendingRequests.values()) {
+          pending.reject(new Error('WebSocket connection closed'));
+        }
+        this.pendingRequests.clear();
         this.notifyConnectionState(false);
         if (!this.manuallyDisconnected) this.attemptReconnect();
       };
@@ -154,6 +161,7 @@ export class DerivWS {
       handler,
       subscriptionId: null,
       active: true,
+      restoring: false,
     };
     this.desiredSubscriptions.set(desiredId, desired);
 
@@ -177,8 +185,13 @@ export class DerivWS {
   }
 
   private sendSubscription(desired: DesiredSubscription): Promise<string | null> {
+    if (!desired.active) return Promise.resolve(null);
+    if (desired.restoring) return Promise.resolve(desired.subscriptionId);
+
+    desired.restoring = true;
     return new Promise((resolve, reject) => {
       if (!this.ws || this.ws.readyState !== WebSocket.OPEN) {
+        desired.restoring = false;
         reject(new Error('WebSocket is not connected'));
         return;
       }
@@ -186,26 +199,36 @@ export class DerivWS {
       const reqId = ++this.reqIdCounter;
       this.pendingRequests.set(reqId, {
         resolve: (data) => {
+          desired.restoring = false;
           const subscriptionId = this.extractSubscriptionId(data);
           desired.subscriptionId = subscriptionId;
           if (subscriptionId) this.subscriptionHandlers.set(subscriptionId, desired.handler);
           desired.handler(data);
           resolve(subscriptionId);
         },
-        reject,
+        reject: (error) => {
+          desired.restoring = false;
+          reject(error);
+        },
       });
 
-      this.ws.send(JSON.stringify({ ...desired.payload, subscribe: 1, req_id: reqId }));
+      try {
+        this.ws.send(JSON.stringify({ ...desired.payload, subscribe: 1, req_id: reqId }));
+      } catch (error) {
+        this.pendingRequests.delete(reqId);
+        desired.restoring = false;
+        reject(error instanceof Error ? error : new Error('Failed to send subscription'));
+      }
     });
   }
 
   private async restoreSubscriptions(): Promise<void> {
     for (const desired of this.desiredSubscriptions.values()) {
-      if (!desired.active || desired.subscriptionId) continue;
+      if (!desired.active || desired.subscriptionId || desired.restoring) continue;
       try {
         await this.sendSubscription(desired);
       } catch {
-        // Reconnection will retry active subscriptions on the next successful socket.
+        // Leave the desired subscription registered so a later reconnect can retry it.
       }
     }
   }
