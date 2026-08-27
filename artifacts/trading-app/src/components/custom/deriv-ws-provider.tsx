@@ -1,6 +1,4 @@
-
-
-import { createContext, useContext } from 'react';
+import { createContext, useContext, useEffect } from 'react';
 import { useDerivWS } from '@deriv/core';
 import { useAuth } from '@/hooks/use-auth';
 import type { DerivWS } from '@deriv/core';
@@ -16,9 +14,9 @@ interface DerivWSContextValue {
 const DerivWSContext = createContext<DerivWSContextValue | null>(null);
 
 /**
- * Maintains a single WebSocket connection and auth state above all page components
- * so navigation between pages (e.g. main → reports → back) does not tear down
- * and recreate the connection.
+ * Maintains a single WebSocket connection and auth state above all page components.
+ * Also owns the account-balance subscription so every trading surface sees the
+ * same live balance and the balance recovers automatically after reconnects.
  */
 export function DerivWSProvider({ children }: { children: React.ReactNode }) {
   const auth = useAuth();
@@ -26,6 +24,50 @@ export function DerivWSProvider({ children }: { children: React.ReactNode }) {
     url: auth.wsUrl,
     accountId: auth.activeAccountId ?? undefined,
   });
+
+  useEffect(() => {
+    if (!ws || !isConnected || !auth.activeAccountId || auth.authState !== 'authenticated') {
+      return;
+    }
+
+    let disposed = false;
+    let unsubscribeBalance: (() => void) | null = null;
+
+    ws.subscribe({ balance: 1 }, (data) => {
+      if (disposed) return;
+      const balance = data.balance as number | string | undefined;
+      if (balance !== undefined) {
+        auth.updateAccountBalance(auth.activeAccountId!, balance);
+      }
+    })
+      .then(({ unsubscribe }) => {
+        if (disposed) {
+          unsubscribe();
+          return;
+        }
+        unsubscribeBalance = unsubscribe;
+      })
+      .catch(() => {
+        // Connection state/reconnect handling will retry the subscription.
+      });
+
+    // A successful buy response contains balance_after. Apply it immediately;
+    // the balance subscription remains authoritative for subsequent updates.
+    const unsubscribeMessages = ws.onMessage((data) => {
+      if (disposed) return;
+      const buy = data.buy as Record<string, unknown> | undefined;
+      const balanceAfter = buy?.balance_after as number | string | undefined;
+      if (balanceAfter !== undefined) {
+        auth.updateAccountBalance(auth.activeAccountId!, balanceAfter);
+      }
+    });
+
+    return () => {
+      disposed = true;
+      unsubscribeMessages();
+      unsubscribeBalance?.();
+    };
+  }, [ws, isConnected, auth.authState, auth.activeAccountId, auth.updateAccountBalance]);
 
   return (
     <DerivWSContext.Provider value={{ ws, isConnected, isExhausted, auth }}>
