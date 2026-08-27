@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+env:
+  PORT: 4173
+  BASE_PATH: /
+
 jobs:
   validate:
     runs-on: ubuntu-latest
