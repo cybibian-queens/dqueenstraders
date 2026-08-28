@@ -10,6 +10,7 @@ import { StoreProvider } from '@/hooks/useStore';
 import CallbackPage from '@/pages/callback';
 import Endpoint from '@/pages/endpoint';
 import { TAuthData } from '@/types/api-types';
+import { isDerivCallbackPage } from '@/utils/auth-client-shim';
 import { initializeI18n, localize, TranslationProvider } from '@deriv-com/translations';
 import CoreStoreProvider from './CoreStoreProvider';
 import './app-root.scss';
@@ -18,6 +19,8 @@ const Layout = lazy(() => import('../components/layout'));
 const AppRoot = lazy(() => import('./app-root'));
 const FreeBots = lazy(() => import('../pages/free-bots'));
 const AnalysisTool = lazy(() => import('../pages/analysis-tool'));
+
+const RootIndex = () => (isDerivCallbackPage() ? <CallbackPage /> : <AppRoot />);
 
 const { TRANSLATIONS_CDN_URL, R2_PROJECT_NAME, CROWDIN_BRANCH_NAME } = process.env;
 const i18nInstance = initializeI18n({
@@ -54,7 +57,7 @@ const router = createBrowserRouter(
             }
         >
             {/* All child routes will be passed as children to Layout */}
-            <Route index element={<AppRoot />} />
+            <Route index element={<RootIndex />} />
             <Route path='endpoint' element={<Endpoint />} />
             <Route path='callback' element={<CallbackPage />} />
             <Route path='free-bots' element={<FreeBots />} />
