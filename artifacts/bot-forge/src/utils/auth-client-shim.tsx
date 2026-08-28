@@ -38,6 +38,23 @@ const OAUTH_STATE_KEY = 'deriv.oauth.state';
 const OAUTH_PAYLOAD_KEY = 'deriv.oauth.payload';
 const OAUTH_REDIRECT_URI_KEY = 'deriv.oauth.redirect_uri';
 
+export const getDerivRedirectUri = (): string =>
+    window.location.hostname === 'dqueenstraders.netlify.app'
+        ? window.location.origin
+        : `${window.location.origin}/callback`;
+
+export const isDerivCallbackPage = (): boolean => {
+    const pathname = window.location.pathname;
+    const hasOAuthResponse = ['code', 'error', 'error_description'].some(param =>
+        new URLSearchParams(window.location.search).has(param)
+    );
+
+    return pathname === '/callback' || pathname.endsWith('/callback') ||
+        (window.location.hostname === 'dqueenstraders.netlify.app' &&
+            (pathname === '/' || pathname === '') &&
+            hasOAuthResponse);
+};
+
 const toBase64Url = (bytes: Uint8Array): string => {
     let binary = '';
     bytes.forEach(byte => {
@@ -58,7 +75,7 @@ const createCodeChallenge = async (verifier: string): Promise<string> => {
 };
 
 export async function requestOidcAuthentication(options: OidcOptions = {}): Promise<void> {
-    const { redirectCallbackUri = `${window.location.origin}/callback`, state, login_code } = options;
+    const { redirectCallbackUri = getDerivRedirectUri(), state, login_code } = options;
     const verifier = generateRandomValue();
     const oauthState = generateRandomValue(32);
     const challenge = await createCodeChallenge(verifier);
@@ -127,7 +144,7 @@ export const Callback: React.FC<CallbackProps> = ({ onSignInSuccess, renderRetur
                 const expectedState = sessionStorage.getItem(OAUTH_STATE_KEY);
                 const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
                 const redirectUri =
-                    sessionStorage.getItem(OAUTH_REDIRECT_URI_KEY) || `${window.location.origin}/callback`;
+                    sessionStorage.getItem(OAUTH_REDIRECT_URI_KEY) || getDerivRedirectUri();
 
                 if (!returnedState || !expectedState || returnedState !== expectedState) {
                     throw new Error('The sign-in response could not be verified. Please try again.');
