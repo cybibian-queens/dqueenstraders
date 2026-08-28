@@ -11,6 +11,7 @@ import { useApiBase } from '@/hooks/useApiBase';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
 import { clearAuthData, handleOidcAuthFailure } from '@/utils/auth-utils';
+import { getDerivRedirectUri } from '@/utils/auth-client-shim';
 import { StandaloneCircleUserRegularIcon } from '@deriv/quill-icons/Standalone';
 import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import { Localize, useTranslations } from '@deriv-com/translations';
@@ -158,7 +159,7 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                                     // Always use OIDC if TMB is not enabled
                                     try {
                                         await requestOidcAuthentication({
-                                            redirectCallbackUri: `${window.location.origin}/callback`,
+                                            redirectCallbackUri: getDerivRedirectUri(),
                                             ...(query_param_currency
                                                 ? {
                                                       state: {
