@@ -97,7 +97,7 @@ class DBot {
         };
 
         return new Promise((resolve, reject) => {
-            __webpack_public_path__ = public_path; // eslint-disable-line no-global-assign
+            window.__webpack_public_path__ = public_path;
             ApiHelpers.setInstance(api_helpers_store);
             DBotStore.setInstance(store);
             const window_width = window.innerWidth;
@@ -116,7 +116,7 @@ class DBot {
                 }
                 const el_scratch_div = document.getElementById('scratch_div');
                 if (!el_scratch_div) {
-                    return;
+                return reject(new Error('Blockly workspace container #scratch_div was not found'));
                 }
 
                 this.workspace = window.Blockly.inject(el_scratch_div, {
