@@ -29,7 +29,10 @@ const modifyBlocklyWorkSpaceContextMenu = () => {
 
 export const loadBlockly = async isDarkMode => {
     const BlocklyModule = await import('blockly');
-    window.Blockly = BlocklyModule.default;
+    // Blockly 11 is ESM-only and does not expose a default export. Keep a
+    // mutable copy because the legacy DBot blocks attach Colours, JavaScript,
+    // custom themes, and workspace helpers to the global Blockly object.
+    window.Blockly = { ...(BlocklyModule.default ?? BlocklyModule) };
     window.Blockly.Colours = {};
     const BlocklyGenerator = new window.Blockly.Generator('code');
     const BlocklyJavaScriptGenerator = {
