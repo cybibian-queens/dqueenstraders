@@ -146,7 +146,11 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
 
                             try {
                                 // First, explicitly wait for TMB status to be determined
-                                const tmbEnabled = await isTmbEnabled();
+                                // The TMB flow still targets the retired
+                                // oauth.deriv.com endpoint. Custom deployments
+                                // use the current PKCE flow instead.
+                                const tmbEnabled =
+                                    window.location.hostname.endsWith('.deriv.com') && (await isTmbEnabled());
                                 // Now use the result of the explicit check
                                 if (tmbEnabled) {
                                     await onRenderTMBCheck(true); // Pass true to indicate it's from login button
@@ -164,8 +168,8 @@ const AppHeader = observer(({ isAuthenticating }: TAppHeaderProps) => {
                                                 : {}),
                                         });
                                     } catch (err) {
+                                        console.error('Unable to start Deriv sign in:', err);
                                         handleOidcAuthFailure(err);
-                                        window.location.replace(generateOAuthURL());
                                     }
                                 }
                             } catch (error) {
