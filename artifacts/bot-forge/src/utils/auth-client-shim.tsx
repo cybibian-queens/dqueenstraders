@@ -31,7 +31,7 @@ export interface CallbackProps {
 const DERIV_AUTH_URL = 'https://auth.deriv.com/oauth2/auth';
 const DERIV_TOKEN_URL = 'https://auth.deriv.com/oauth2/token';
 const DERIV_LEGACY_TOKENS_URL = 'https://auth.deriv.com/oauth2/legacy/tokens';
-const DERIV_OAUTH_CLIENT_ID = (window as any).__DERIV_OAUTH_CLIENT_ID__ || '33Tz0wxlDfb62ywDERsKo';
+const DERIV_OAUTH_CLIENT_ID = (window as any).__DERIV_OAUTH_CLIENT_ID__ || '33Tz0wxIDfb62ywDERsKo';
 const DERIV_LEGACY_APP_ID = (window as any).__DERIV_APP_ID__ || '36300';
 const PKCE_VERIFIER_KEY = 'deriv.oauth.pkce_verifier';
 const OAUTH_STATE_KEY = 'deriv.oauth.state';
