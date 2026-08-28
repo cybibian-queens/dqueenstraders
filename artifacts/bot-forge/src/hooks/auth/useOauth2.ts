@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useEffect } from 'react';
 import Cookies from 'js-cookie';
 import RootStore from '@/stores/root-store';
+import { getDerivRedirectUri, isDerivCallbackPage } from '@/utils/auth-client-shim';
 import { handleOidcAuthFailure } from '@/utils/auth-utils';
 import { Analytics } from '@deriv-com/analytics';
 import { OAuth2Logout, requestOidcAuthentication } from '@deriv-com/auth-client';
@@ -32,7 +33,7 @@ export const useOauth2 = ({
     const accountsList = JSON.parse(localStorage.getItem('accountsList') ?? '{}');
     const isClientAccountsPopulated = Object.keys(accountsList).length > 0;
     const isSilentLoginExcluded =
-        window.location.pathname.includes('callback') || window.location.pathname.includes('endpoint');
+        isDerivCallbackPage() || window.location.pathname.includes('endpoint');
 
     const loggedState = Cookies.get('logged_state');
 
@@ -59,7 +60,7 @@ export const useOauth2 = ({
         client?.setIsLoggingOut(true);
         try {
             await OAuth2Logout({
-                redirectCallbackUri: `${window.location.origin}/callback`,
+                redirectCallbackUri: getDerivRedirectUri(),
                 WSLogoutAndRedirect: handleLogout ?? (() => Promise.resolve()),
                 postLogoutRedirectUri: window.location.origin,
             }).catch(err => {
@@ -80,7 +81,7 @@ export const useOauth2 = ({
     const retriggerOAuth2Login = async () => {
         try {
             await requestOidcAuthentication({
-                redirectCallbackUri: `${window.location.origin}/callback`,
+                redirectCallbackUri: getDerivRedirectUri(),
                 postLogoutRedirectUri: window.location.origin,
             }).catch(err => {
                 handleOidcAuthFailure(err);
