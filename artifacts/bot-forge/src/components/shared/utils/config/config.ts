@@ -155,6 +155,13 @@ export const generateOAuthURL = () => {
     const original_url = new URL(oauth_url);
     const hostname = window.location.hostname;
 
+    // Custom deployments must keep Deriv's OAuth hostname. Deriving an OAuth
+    // host from dqueenstraders.netlify.app produces the invalid
+    // oauth.netlify.app URL.
+    if (hostname === 'dqueenstraders.netlify.app' || hostname.endsWith('.replit.dev') || isLocal()) {
+        return original_url.toString() || oauth_url;
+    }
+
     // First priority: Check for configured server URLs (for QA/testing environments)
     const configured_server_url = (LocalStorageUtils.getValue(LocalStorageConstants.configServerURL) ||
         localStorage.getItem('config.server_url')) as string;
