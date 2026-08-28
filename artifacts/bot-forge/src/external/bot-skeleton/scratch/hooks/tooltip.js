@@ -7,7 +7,7 @@ window.Blockly.Tooltip.show_ = () => {
     window.Blockly.Tooltip.DIV =
         ((window.Blockly.Tooltip.poisonedElement_ = window.Blockly.Tooltip.element_), window.Blockly.Tooltip.DIV);
     if (!window.Blockly.Tooltip.blocked_) {
-        window.Blockly.Tooltip.DIV.innerHTML = '';
+        window.Blockly.Tooltip.DIV.replaceChildren();
         for (params = window.Blockly.Tooltip.element_.tooltip; typeof params === 'function'; ) params = params();
         params = window.Blockly.utils.string.wrap(params, window.Blockly.Tooltip.LIMIT);
         params = params.split('\n');
