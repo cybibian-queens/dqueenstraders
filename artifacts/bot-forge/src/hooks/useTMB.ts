@@ -5,6 +5,7 @@ import { removeCookies } from '@/components/shared/utils/storage/storage';
 import { api_base } from '@/external/bot-skeleton';
 import { setAuthData } from '@/external/bot-skeleton/services/api/observables/connection-status-stream';
 import { TAuthData } from '@/types/api-types';
+import { isDerivCallbackPage } from '@/utils/auth-client-shim';
 // TODO: need to fix this on auth cliet side
 // import { requestSessionActive } from '@deriv-com/auth-client';
 
@@ -50,7 +51,7 @@ const useTMB = (): UseTMBReturn => {
     }
 
     // const isEndpointPage = useMemo(() => window.location.pathname.includes('endpoint'), []);
-    const isCallbackPage = useMemo(() => window.location.pathname === '/callback', []);
+    const isCallbackPage = useMemo(() => isDerivCallbackPage(), []);
     const domains = useMemo(
         () => ['deriv.com', 'deriv.dev', 'binary.sx', 'pages.dev', 'localhost', 'deriv.be', 'deriv.me'],
         []
