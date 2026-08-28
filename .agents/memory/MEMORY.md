@@ -1,7 +1,9 @@
-- [Bot Forge React 19 compat](bot-forge-react19.md) — @deriv-com/auth-client bundles React internally; must alias to a local shim to avoid ReactCurrentDispatcher crash
+- [Bot Forge React 19 compat](bot-forge-react19.md) — Auth Client and Quill UI need local shims; react-dom/server must resolve to its browser build
 - [Bot Forge JS/JSX rename rule](bot-forge-jsx-rename.md) — .js files with JSX from the ddbotforge zip must be renamed to .jsx or Vite/esbuild misparsels generics as JSX
 - [Bot Forge missing deps](bot-forge-deps.md) — packages not in the original zip that must be added: i18next, react-i18next, immutable, rxjs, redux, redux-thunk, lodash.debounce, history, object.fromentries, prop-types, ua-parser-js, usehooks-ts, react-loadable, react-div-100vh, @deriv/deriv-charts, @deriv/api-types, @deriv-com/quill-ui-next, trackjs
 - [Bot Forge SASS config](bot-forge-sass.md) — vite css.preprocessorOptions.scss.loadPaths must include src/ so @use 'components/shared/styles/themes' resolves
 - [Bot Forge router basename](bot-forge-router.md) — createBrowserRouter must receive basename: import.meta.env.BASE_URL to handle /bot-forge/ prefix
 - [React 19 pnpm override](react19-override.md) — workspace root package.json needs pnpm.overrides react/react-dom to 19.1.0 to prevent older dep copies loading
 - [Bot Forge Netlify source shims](bot-forge-netlify-shims.md) — generic tmp ignore rules can exclude required imported source files from clean Netlify clones
+- [Bot Forge Deriv OAuth](bot-forge-deriv-oauth.md) — custom deployments use auth.deriv.com PKCE; OAuth client ID and legacy WebSocket app ID are separate
+- [Bot Forge Blockly 11](bot-forge-blockly11.md) — Blockly is ESM-only, legacy globals need a mutable namespace, and initialization must never leave loaders pending
