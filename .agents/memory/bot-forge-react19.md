@@ -1,16 +1,12 @@
 ---
-name: Bot Forge — @deriv-com/auth-client React conflict
-description: The @deriv-com/auth-client package bundles React 17 in its dist, causing ReactCurrentDispatcher crash with React 19 apps.
+name: Bot Forge React 19 compatibility
+description: React 19 compatibility rules for Deriv packages and browser-side react-dom/server usage.
 ---
 
 ## Rule
-Never import `@deriv-com/auth-client` directly in the bot-forge artifact. Always alias it to the local shim.
+Keep both `@deriv-com/auth-client` and `@deriv-com/quill-ui` behind local React 19-compatible shims. Ensure browser imports of `react-dom/server` resolve to React DOM's browser entry.
 
-**Why:** The package's dist file bundles a private copy of React 17/18. When Vite pre-bundles it, two React instances end up in the browser, causing `Cannot read properties of undefined (reading 'ReactCurrentDispatcher')`.
+**Why:** Auth Client and Quill UI bundle older React runtimes that crash under React 19 with dispatcher/internal-hook errors. A broad `react-dom` alias can also route `react-dom/server` to the Node build, causing `util.TextEncoder is not a constructor` in browsers.
 
 **How to apply:**
-In `artifacts/bot-forge/vite.config.ts` under `resolve.alias`:
-```
-'@deriv-com/auth-client': path.resolve(import.meta.dirname, 'src/utils/auth-client-shim.tsx'),
-```
-The shim at `src/utils/auth-client-shim.tsx` implements `requestOidcAuthentication`, `OAuth2Logout`, and the `Callback` component using the app's React.
+When adding or changing these packages, retain their local aliases and keep the browser-specific `react-dom/server` alias more specific than the general `react-dom` alias. Do not patch React internals or re-enable the packages directly without a full browser startup test.
