@@ -32,9 +32,11 @@ export function useBuy(
     setBuyResult(null);
 
     try {
+      // New API buy.price is numeric. The proposal ID is the New API proposal
+      // identifier returned by the preceding proposal request.
       const response = await ws.send<BuyResponse>({
         buy: proposal.id,
-        price: String(proposal.askPrice),
+        price: Number(proposal.askPrice),
       });
 
       if (response.buy) {
