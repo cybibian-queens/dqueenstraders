@@ -1,11 +1,10 @@
 /**
- * Shim for @deriv-com/auth-client
- * The real package bundles React 17 internally which conflicts with React 19.
- * This shim provides the same API surface using the app's React instance.
+ * Shim for @deriv-com/auth-client using Deriv OAuth 2.0 + PKCE.
+ * The app keeps this compatibility surface while the trading layer migrates
+ * from the Legacy Deriv API to the New API.
  */
 import React, { useEffect } from 'react';
-
-// ── Types ──────────────────────────────────────────────────────────────────────
+import { saveDerivNewToken } from './deriv-new-api';
 
 export interface OidcOptions {
     redirectCallbackUri?: string;
@@ -26,14 +25,15 @@ export interface CallbackProps {
     renderReturnButton?: () => React.ReactNode;
 }
 
-// ── Deriv OAuth helpers ────────────────────────────────────────────────────────
-
 const DERIV_AUTH_URL = 'https://auth.deriv.com/oauth2/auth';
 const DERIV_TOKEN_URL = 'https://auth.deriv.com/oauth2/token';
-const DERIV_LEGACY_TOKENS_URL = 'https://auth.deriv.com/oauth2/legacy/tokens';
 const DERIV_PRODUCTION_ORIGIN = 'https://dqueenstraders.netlify.app';
 const DERIV_TOKEN_EXCHANGE_FUNCTION = '/.netlify/functions/deriv-oauth-token';
-const DERIV_OAUTH_CLIENT_ID = (window as any).__DERIV_OAUTH_CLIENT_ID__ || '33Tz0wxIDfb62ywDERsKo';
+const DERIV_OAUTH_CLIENT_ID =
+    (window as any).__DERIV_OAUTH_CLIENT_ID__ || '33Tz0wxIDfb62ywDERsKo';
+// Optional during the migration period. This is only sent to Deriv's OAuth
+// authorization endpoint so Deriv can route legacy users appropriately. It is
+// never exchanged for legacy account tokens by DQueens.
 const DERIV_LEGACY_APP_ID = (window as any).__DERIV_APP_ID__ || '36300';
 const PKCE_VERIFIER_KEY = 'deriv.oauth.pkce_verifier';
 const OAUTH_STATE_KEY = 'deriv.oauth.state';
@@ -48,13 +48,16 @@ export const getDerivRedirectUri = (): string =>
 export const isDerivCallbackPage = (): boolean => {
     const pathname = window.location.pathname;
     const hasOAuthResponse = ['code', 'error', 'error_description'].some(param =>
-        new URLSearchParams(window.location.search).has(param)
+        new URLSearchParams(window.location.search).has(param),
     );
 
-    return pathname === '/callback' || pathname.endsWith('/callback') ||
+    return (
+        pathname === '/callback' ||
+        pathname.endsWith('/callback') ||
         (window.location.hostname === 'dqueenstraders.netlify.app' &&
             (pathname === '/' || pathname === '') &&
-            hasOAuthResponse);
+            hasOAuthResponse)
+    );
 };
 
 const toBase64Url = (bytes: Uint8Array): string => {
@@ -79,8 +82,10 @@ const createCodeChallenge = async (verifier: string): Promise<string> => {
 const exchangeAuthorizationCode = async (
     code: string,
     verifier: string,
-    redirectUri: string
+    redirectUri: string,
 ): Promise<Record<string, string>> => {
+    let tokenBody: Record<string, any>;
+
     if (window.location.origin === DERIV_PRODUCTION_ORIGIN) {
         const response = await fetch(DERIV_TOKEN_EXCHANGE_FUNCTION, {
             method: 'POST',
@@ -91,41 +96,43 @@ const exchangeAuthorizationCode = async (
                 redirect_uri: redirectUri,
             }),
         });
-        const body = await response.json().catch(() => ({}));
+        tokenBody = await response.json().catch(() => ({}));
         if (!response.ok) {
-            throw new Error(body.error || `Sign-in exchange failed (${response.status}).`);
+            throw new Error(tokenBody.error || `Sign-in exchange failed (${response.status}).`);
         }
-        return body;
+    } else {
+        const tokenResponse = await fetch(DERIV_TOKEN_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: new URLSearchParams({
+                grant_type: 'authorization_code',
+                client_id: DERIV_OAUTH_CLIENT_ID,
+                code,
+                code_verifier: verifier,
+                redirect_uri: redirectUri,
+            }),
+        });
+        tokenBody = await tokenResponse.json().catch(() => ({}));
+        if (!tokenResponse.ok) {
+            throw new Error(tokenBody.error_description || tokenBody.error || `Token exchange failed (${tokenResponse.status}).`);
+        }
     }
 
-    const tokenResponse = await fetch(DERIV_TOKEN_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: new URLSearchParams({
-            grant_type: 'authorization_code',
-            client_id: DERIV_OAUTH_CLIENT_ID,
-            code,
-            code_verifier: verifier,
-            redirect_uri: redirectUri,
-        }),
-    });
-    if (!tokenResponse.ok) {
-        throw new Error(`Token exchange failed (${tokenResponse.status}).`);
-    }
-
-    const tokenBody = await tokenResponse.json();
     if (!tokenBody.access_token) {
-        throw new Error('The sign-in response did not include an access token.');
+        throw new Error('The sign-in response did not include a New API access token.');
     }
 
-    const legacyResponse = await fetch(DERIV_LEGACY_TOKENS_URL, {
-        method: 'POST',
-        headers: { Authorization: `Bearer ${tokenBody.access_token}` },
+    saveDerivNewToken({
+        access_token: tokenBody.access_token,
+        expires_in: Number(tokenBody.expires_in) || undefined,
+        token_type: tokenBody.token_type || 'Bearer',
     });
-    if (!legacyResponse.ok) {
-        throw new Error(`Account token exchange failed (${legacyResponse.status}).`);
-    }
-    return legacyResponse.json();
+
+    return {
+        access_token: String(tokenBody.access_token),
+        expires_in: String(tokenBody.expires_in ?? ''),
+        token_type: String(tokenBody.token_type || 'Bearer'),
+    };
 };
 
 export async function requestOidcAuthentication(options: OidcOptions = {}): Promise<void> {
@@ -147,33 +154,34 @@ export async function requestOidcAuthentication(options: OidcOptions = {}): Prom
         state: oauthState,
         code_challenge: challenge,
         code_challenge_method: 'S256',
-        app_id: DERIV_LEGACY_APP_ID,
         brand: 'deriv',
     });
+
+    // Keep legacy routing compatibility only while the account migration is in
+    // progress. The resulting token remains a New API OAuth token.
+    if (DERIV_LEGACY_APP_ID) params.set('app_id', DERIV_LEGACY_APP_ID);
     if (login_code) params.set('login_code', login_code);
 
-    const url = `${DERIV_AUTH_URL}?${params}`;
-    window.location.href = url;
+    window.location.href = `${DERIV_AUTH_URL}?${params.toString()}`;
 }
 
 export async function OAuth2Logout(options: OAuth2LogoutOptions = {}): Promise<void> {
     const { WSLogoutAndRedirect, postLogoutRedirectUri = window.location.origin } = options;
     try {
-        if (WSLogoutAndRedirect) {
-            await WSLogoutAndRedirect();
-        }
+        if (WSLogoutAndRedirect) await WSLogoutAndRedirect();
     } catch {
-        // ignore
+        // ignore logout transport failures
     }
-    // Clear local auth state
+
     localStorage.removeItem('accountsList');
     localStorage.removeItem('clientAccounts');
     localStorage.removeItem('authToken');
     localStorage.removeItem('active_loginid');
+    localStorage.removeItem('deriv.new_api.access_token');
+    localStorage.removeItem('deriv.new_api.token_expiry');
+    localStorage.removeItem('deriv.new_api.active_account');
     window.location.href = postLogoutRedirectUri;
 }
-
-// ── Callback component ─────────────────────────────────────────────────────────
 
 export const Callback: React.FC<CallbackProps> = ({ onSignInSuccess, renderReturnButton }) => {
     const [status, setStatus] = React.useState<'loading' | 'success' | 'error'>('loading');
@@ -189,51 +197,35 @@ export const Callback: React.FC<CallbackProps> = ({ onSignInSuccess, renderRetur
             const oauthError = params.get('error_description') || params.get('error');
             if (oauthError) throw new Error(oauthError);
 
-            let tokens: Record<string, string>;
-            let rawState: unknown = null;
             const code = params.get('code');
+            if (!code) throw new Error('No OAuth authorization code was received from Deriv.');
 
-            if (code) {
-                const returnedState = params.get('state');
-                const expectedState = sessionStorage.getItem(OAUTH_STATE_KEY);
-                const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
-                const redirectUri =
-                    sessionStorage.getItem(OAUTH_REDIRECT_URI_KEY) || getDerivRedirectUri();
+            const returnedState = params.get('state');
+            const expectedState = sessionStorage.getItem(OAUTH_STATE_KEY);
+            const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
+            const redirectUri =
+                sessionStorage.getItem(OAUTH_REDIRECT_URI_KEY) || getDerivRedirectUri();
 
-                if (!returnedState || !expectedState || returnedState !== expectedState) {
-                    throw new Error('The sign-in response could not be verified. Please try again.');
-                }
-                if (!verifier) {
-                    throw new Error('The sign-in session expired. Please try again.');
-                }
+            if (!returnedState || !expectedState || returnedState !== expectedState) {
+                throw new Error('The sign-in response could not be verified. Please try again.');
+            }
+            if (!verifier) throw new Error('The sign-in session expired. Please try again.');
 
-                try {
-                    rawState = JSON.parse(sessionStorage.getItem(OAUTH_PAYLOAD_KEY) || 'null');
-                } catch {
-                    rawState = null;
-                }
-
-                tokens = await exchangeAuthorizationCode(code, verifier, redirectUri);
-            } else {
-                // Continue to accept the legacy callback format while existing
-                // sessions and older Deriv redirects age out.
-                tokens = {};
-                params.forEach((value, key) => {
-                    if (/^(acct|token|cur)\d+$/.test(key)) tokens[key] = value;
-                });
+            let rawState: unknown = null;
+            try {
+                rawState = JSON.parse(sessionStorage.getItem(OAUTH_PAYLOAD_KEY) || 'null');
+            } catch {
+                rawState = null;
             }
 
-            if (!Object.keys(tokens).length) {
-                throw new Error('No account tokens were received from Deriv.');
-            }
-
+            const tokens = await exchangeAuthorizationCode(code, verifier, redirectUri);
             await onSignInSuccess?.(tokens, rawState);
             setStatus('success');
         };
 
         completeSignIn()
             .catch((err: unknown) => {
-                console.error('[Callback] sign-in error:', err);
+                console.error('[Callback] New API sign-in error:', err);
                 setStatus('error');
                 setErrorMsg(err instanceof Error ? err.message : 'Authentication failed. Please try again.');
             })
