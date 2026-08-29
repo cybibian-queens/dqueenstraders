@@ -4,6 +4,7 @@
  * from the Legacy Deriv API to the New API.
  */
 import React, { useEffect } from 'react';
+import Cookies from 'js-cookie';
 import { saveDerivNewToken } from './deriv-new-api';
 
 export interface OidcOptions {
@@ -127,6 +128,7 @@ const exchangeAuthorizationCode = async (
         expires_in: Number(tokenBody.expires_in) || undefined,
         token_type: tokenBody.token_type || 'Bearer',
     });
+    Cookies.set('logged_state', 'true');
 
     return {
         access_token: String(tokenBody.access_token),
@@ -157,8 +159,6 @@ export async function requestOidcAuthentication(options: OidcOptions = {}): Prom
         brand: 'deriv',
     });
 
-    // Keep legacy routing compatibility only while the account migration is in
-    // progress. The resulting token remains a New API OAuth token.
     if (DERIV_LEGACY_APP_ID) params.set('app_id', DERIV_LEGACY_APP_ID);
     if (login_code) params.set('login_code', login_code);
 
@@ -180,6 +180,7 @@ export async function OAuth2Logout(options: OAuth2LogoutOptions = {}): Promise<v
     localStorage.removeItem('deriv.new_api.access_token');
     localStorage.removeItem('deriv.new_api.token_expiry');
     localStorage.removeItem('deriv.new_api.active_account');
+    Cookies.set('logged_state', 'false');
     window.location.href = postLogoutRedirectUri;
 }
 
