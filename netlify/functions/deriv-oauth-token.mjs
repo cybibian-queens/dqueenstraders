@@ -1,5 +1,4 @@
 const DERIV_TOKEN_URL = 'https://auth.deriv.com/oauth2/token';
-const DERIV_LEGACY_TOKENS_URL = 'https://auth.deriv.com/oauth2/legacy/tokens';
 const DERIV_OAUTH_CLIENT_ID = '33Tz0wxIDfb62ywDERsKo';
 const PRODUCTION_ORIGIN = 'https://dqueenstraders.netlify.app';
 
@@ -57,29 +56,17 @@ export default async request => {
                 {
                     error: tokenBody.error_description || tokenBody.error || 'Token exchange failed.',
                 },
-                tokenResponse.ok ? 502 : tokenResponse.status
+                tokenResponse.ok ? 502 : tokenResponse.status,
             );
         }
 
-        const legacyResponse = await fetch(DERIV_LEGACY_TOKENS_URL, {
-            method: 'POST',
-            headers: { Authorization: `Bearer ${tokenBody.access_token}` },
+        // Return the New API OAuth token directly. Do not convert it through
+        // /oauth2/legacy/tokens; live account access now uses api.derivws.com.
+        return jsonResponse({
+            access_token: tokenBody.access_token,
+            expires_in: tokenBody.expires_in,
+            token_type: tokenBody.token_type || 'Bearer',
         });
-        const legacyTokens = await legacyResponse.json().catch(() => ({}));
-
-        if (!legacyResponse.ok) {
-            return jsonResponse(
-                {
-                    error:
-                        legacyTokens.error_description ||
-                        legacyTokens.error ||
-                        'Account token exchange failed.',
-                },
-                legacyResponse.status
-            );
-        }
-
-        return jsonResponse(legacyTokens);
     } catch (error) {
         console.error('[Deriv OAuth] Exchange failed:', error);
         return jsonResponse({ error: 'Unable to contact Deriv authentication.' }, 502);
