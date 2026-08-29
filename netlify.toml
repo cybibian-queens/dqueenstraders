@@ -32,6 +32,9 @@
   BASE_PATH    = "/"
   APP_ENV      = "production"
 
+[functions]
+  directory = "netlify/functions"
+
 # SPA fallback — every client-side route is served by index.html
 [[redirects]]
   from   = "/*"
