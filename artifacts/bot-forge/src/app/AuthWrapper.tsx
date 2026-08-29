@@ -1,12 +1,12 @@
 import React from 'react';
 import Cookies from 'js-cookie';
 import ChunkLoader from '@/components/loader/chunk-loader';
-import { generateDerivApiInstance } from '@/external/bot-skeleton/services/api/appId';
 import { observer as globalObserver } from '@/external/bot-skeleton/utils/observer';
 import { useOfflineDetection } from '@/hooks/useOfflineDetection';
 import { clearAuthData } from '@/utils/auth-utils';
 import { localize } from '@deriv-com/translations';
 import { URLUtils } from '@deriv-com/utils';
+import { getDerivNewToken, initializeDerivNewSession } from '@/utils/deriv-new-api';
 import App from './App';
 
 declare global {
@@ -19,8 +19,27 @@ const setLocalStorageToken = async (
     loginInfo: URLUtils.LoginInfo[],
     paramsToDelete: string[],
     setIsAuthComplete: React.Dispatch<React.SetStateAction<boolean>>,
-    isOnline: boolean
+    isOnline: boolean,
 ) => {
+    // New API session: the OAuth callback has already stored a Bearer token.
+    // Do not attempt a Legacy authorize() call with that token.
+    const newApiToken = getDerivNewToken();
+    if (newApiToken) {
+        try {
+            await initializeDerivNewSession();
+        } catch (error) {
+            console.error('[Auth] New API session initialization failed:', error);
+            // Keep the session available; the trading layer can surface a
+            // specific API error instead of reverting to legacy auth.
+        } finally {
+            URLUtils.filterSearchParams(paramsToDelete);
+            setIsAuthComplete(true);
+        }
+        return;
+    }
+
+    // Legacy callback support remains only for users who have not completed the
+    // platform migration yet. It is deliberately isolated from the New API path.
     if (loginInfo.length) {
         try {
             const defaultActiveAccount = URLUtils.getDefaultActiveAccount(loginInfo);
@@ -38,57 +57,18 @@ const setLocalStorageToken = async (
             localStorage.setItem('clientAccounts', JSON.stringify(clientAccounts));
             URLUtils.filterSearchParams(paramsToDelete);
 
+            // Legacy sessions are no longer used to initialize the New API.
+            // Preserve the old storage only for the temporary compatibility path.
             if (!isOnline) {
                 localStorage.setItem('authToken', loginInfo[0].token);
                 localStorage.setItem('active_loginid', loginInfo[0].loginid);
                 return;
             }
 
-            try {
-                const api = await generateDerivApiInstance();
-
-                if (api) {
-                    // Never allow a stalled authorization request to block startup.
-                    const authorization = api.authorize(loginInfo[0].token);
-                    const timeout = new Promise<{ authorize?: undefined; error: { code: string; message: string } }>(resolve =>
-                        setTimeout(() => resolve({ error: { code: 'AuthTimeout', message: 'Authentication request timed out' } }), 8000)
-                    );
-                    const result = await Promise.race([authorization, timeout]);
-                    api.disconnect();
-
-                    const { authorize, error } = result;
-                    if (error) {
-                        if (error.code === 'InvalidToken') {
-                            setIsAuthComplete(true);
-                            const is_tmb_enabled = window.is_tmb_enabled === true;
-                            if (Cookies.get('logged_state') === 'true' && !is_tmb_enabled) {
-                                globalObserver.emit('InvalidToken', { error });
-                            }
-                            if (Cookies.get('logged_state') === 'false') {
-                                clearAuthData();
-                            }
-                        }
-                    } else if (authorize) {
-                        localStorage.setItem('client.country', authorize.country);
-                        const firstId = authorize?.account_list[0]?.loginid;
-                        const filteredTokens = loginInfo.filter(token => token.loginid === firstId);
-                        if (filteredTokens.length) {
-                            localStorage.setItem('authToken', filteredTokens[0].token);
-                            localStorage.setItem('active_loginid', filteredTokens[0].loginid);
-                            return;
-                        }
-                    }
-                }
-            } catch (apiError) {
-                console.error('[Auth] API connection error:', apiError);
-                localStorage.setItem('authToken', loginInfo[0].token);
-                localStorage.setItem('active_loginid', loginInfo[0].loginid);
-            }
-
             localStorage.setItem('authToken', loginInfo[0].token);
             localStorage.setItem('active_loginid', loginInfo[0].loginid);
         } catch (error) {
-            console.error('Error setting up login info:', error);
+            console.error('Error setting up legacy login info:', error);
         }
     }
 };
@@ -103,13 +83,17 @@ export const AuthWrapper = () => {
 
         const initializeAuth = async () => {
             try {
-                // Hard upper bound for the entire authentication initialization.
-                const initialization = setLocalStorageToken(loginInfo, paramsToDelete, setIsAuthComplete, isOnline);
+                const initialization = setLocalStorageToken(
+                    loginInfo,
+                    paramsToDelete,
+                    setIsAuthComplete,
+                    isOnline,
+                );
                 const timeout = new Promise<void>(resolve =>
                     setTimeout(() => {
                         console.warn('[Auth] Initialization timeout; continuing to app');
                         resolve();
-                    }, 10000)
+                    }, 10000),
                 );
                 await Promise.race([initialization, timeout]);
                 URLUtils.filterSearchParams(['lang']);
