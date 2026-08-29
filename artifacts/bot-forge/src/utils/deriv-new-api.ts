@@ -1,8 +1,16 @@
 export const DERIV_NEW_API_BASE_URL = 'https://api.derivws.com';
+
+const runtime = window as Window & {
+    __DERIV_NEW_APP_ID__?: string;
+    __DERIV_OAUTH_CLIENT_ID__?: string;
+};
+
+// The New API requires the NEW App ID. Never fall back to the OAuth client ID:
+// they are different identifiers and the client ID must not be sent as Deriv-App-ID.
 export const DERIV_NEW_APP_ID =
-    (window as Window & { __DERIV_NEW_APP_ID__?: string }).__DERIV_NEW_APP_ID__ ||
-    (window as Window & { __DERIV_OAUTH_CLIENT_ID__?: string }).__DERIV_OAUTH_CLIENT_ID__ ||
-    '33Tz0wxIDfb62ywDERsKo';
+    runtime.__DERIV_NEW_APP_ID__ ||
+    (import.meta.env.VITE_DERIV_NEW_APP_ID as string | undefined) ||
+    '';
 
 export const DERIV_NEW_ACCESS_TOKEN_KEY = 'deriv.new_api.access_token';
 export const DERIV_NEW_TOKEN_EXPIRY_KEY = 'deriv.new_api.token_expiry';
@@ -72,6 +80,9 @@ export const clearDerivNewSession = (): void => {
 const getHeaders = (): HeadersInit => {
     const token = getDerivNewToken();
     if (!token) throw new Error('Deriv New API session is not authenticated.');
+    if (!DERIV_NEW_APP_ID) {
+        throw new Error('Missing VITE_DERIV_NEW_APP_ID: configure the new Deriv App ID before connecting.');
+    }
 
     return {
         Authorization: `Bearer ${token}`,
@@ -119,20 +130,15 @@ export const getOptionsWebSocketUrl = async (accountId: string): Promise<string>
         {
             method: 'POST',
             headers: getHeaders(),
-            body: JSON.stringify({}),
         },
     );
     const body = await parseResponse<OtpResponse>(response);
     const url = body.data?.url;
     if (!url) throw new Error('Deriv did not return an authenticated WebSocket URL.');
+    if (!url.startsWith('wss://api.derivws.com/trading/v1/options/ws/')) {
+        throw new Error('Deriv returned an unexpected WebSocket URL.');
+    }
     return url;
-};
-
-export const connectOptionsWebSocket = async (
-    accountId: string,
-): Promise<WebSocket> => {
-    const url = await getOptionsWebSocketUrl(accountId);
-    return new WebSocket(url);
 };
 
 export const setActiveOptionsAccount = (account: DerivOptionsAccount): void => {
@@ -164,9 +170,6 @@ export const initializeDerivNewSession = async (): Promise<{
     try {
         migrationStatus = await getMigrationStatus();
     } catch (error) {
-        // Migration status is diagnostic/compatibility information; don't make
-        // a healthy New API account unusable when the temporary legacy endpoint
-        // is unavailable.
         console.warn('[Deriv New API] Migration status unavailable:', error);
     }
 
