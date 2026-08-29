@@ -1,9 +1,6 @@
 import React from 'react';
-import Cookies from 'js-cookie';
 import ChunkLoader from '@/components/loader/chunk-loader';
-import { observer as globalObserver } from '@/external/bot-skeleton/utils/observer';
 import { useOfflineDetection } from '@/hooks/useOfflineDetection';
-import { clearAuthData } from '@/utils/auth-utils';
 import { localize } from '@deriv-com/translations';
 import { URLUtils } from '@deriv-com/utils';
 import { getDerivNewToken, initializeDerivNewSession } from '@/utils/deriv-new-api';
@@ -21,16 +18,12 @@ const setLocalStorageToken = async (
     setIsAuthComplete: React.Dispatch<React.SetStateAction<boolean>>,
     isOnline: boolean,
 ) => {
-    // New API session: the OAuth callback has already stored a Bearer token.
-    // Do not attempt a Legacy authorize() call with that token.
     const newApiToken = getDerivNewToken();
     if (newApiToken) {
         try {
             await initializeDerivNewSession();
         } catch (error) {
             console.error('[Auth] New API session initialization failed:', error);
-            // Keep the session available; the trading layer can surface a
-            // specific API error instead of reverting to legacy auth.
         } finally {
             URLUtils.filterSearchParams(paramsToDelete);
             setIsAuthComplete(true);
@@ -38,8 +31,8 @@ const setLocalStorageToken = async (
         return;
     }
 
-    // Legacy callback support remains only for users who have not completed the
-    // platform migration yet. It is deliberately isolated from the New API path.
+    // Temporary compatibility path for accounts that have not completed the
+    // platform migration. This path is not used by the New API session.
     if (loginInfo.length) {
         try {
             const defaultActiveAccount = URLUtils.getDefaultActiveAccount(loginInfo);
@@ -57,8 +50,6 @@ const setLocalStorageToken = async (
             localStorage.setItem('clientAccounts', JSON.stringify(clientAccounts));
             URLUtils.filterSearchParams(paramsToDelete);
 
-            // Legacy sessions are no longer used to initialize the New API.
-            // Preserve the old storage only for the temporary compatibility path.
             if (!isOnline) {
                 localStorage.setItem('authToken', loginInfo[0].token);
                 localStorage.setItem('active_loginid', loginInfo[0].loginid);
