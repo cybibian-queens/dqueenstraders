@@ -52,6 +52,11 @@ export default async request => {
         const tokenBody = await tokenResponse.json().catch(() => ({}));
 
         if (!tokenResponse.ok || !tokenBody.access_token) {
+            console.error('[Deriv OAuth] Token exchange rejected:', {
+                status: tokenResponse.status,
+                error: tokenBody.error,
+                error_description: tokenBody.error_description,
+            });
             return jsonResponse(
                 {
                     error: tokenBody.error_description || tokenBody.error || 'Token exchange failed.',
@@ -60,8 +65,8 @@ export default async request => {
             );
         }
 
-        // Return the New API OAuth token directly. Do not convert it through
-        // /oauth2/legacy/tokens; live account access now uses api.derivws.com.
+        // New API only: return the OAuth access token directly.
+        // Never call /oauth2/legacy/tokens here.
         return jsonResponse({
             access_token: tokenBody.access_token,
             expires_in: tokenBody.expires_in,
