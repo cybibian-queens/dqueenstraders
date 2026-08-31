@@ -11,8 +11,8 @@ import {
     setIsAuthorizing,
 } from './observables/connection-status-stream';
 import chart_api from './chart-api';
-import { generateDerivApiInstance, V2GetActiveClientId, V2GetActiveToken } from './appId';
-import { getActiveOptionsAccount, getOptionsAccounts, clearDerivNewSession } from '@/utils/deriv-new-api';
+import { generateDerivApiInstance } from './appId';
+import { getActiveOptionsAccount, getDerivNewToken, getOptionsAccounts, clearDerivNewSession } from '@/utils/deriv-new-api';
 
 type CurrentSubscription = {
     id: string;
@@ -82,17 +82,14 @@ class APIBase {
                 setConnectionStatus(CONNECTION_STATUS.CLOSED);
             }
 
-            this.api = await generateDerivApiInstance() as TApiBaseApi;
+            this.api = await generateDerivApiInstance({ authenticated: true }) as TApiBaseApi;
             this.api.connection.addEventListener('open', this.onsocketopen);
             this.api.connection.addEventListener('close', this.onsocketclose);
         }
 
         this.initEventListeners();
 
-        if (this.time_interval) clearInterval(this.time_interval);
-        this.time_interval = null;
-
-        if (V2GetActiveToken()) {
+        if (getDerivNewToken()) {
             setIsAuthorizing(true);
             await this.loadNewApiAccountState();
         }
@@ -110,6 +107,7 @@ class APIBase {
 
     terminate() {
         if (this.api) this.api.disconnect();
+        clearDerivNewSession();
     }
 
     initEventListeners() {
@@ -135,7 +133,7 @@ class APIBase {
             if (!active) throw new Error('No active Deriv Options account is selected.');
 
             const selected = accounts.find(account => account.account_id === active.account_id) || active;
-            this.token = V2GetActiveToken() || '';
+            this.token = getDerivNewToken() || '';
             this.account_id = selected.account_id;
             this.account_info = {
                 loginid: selected.account_id,
