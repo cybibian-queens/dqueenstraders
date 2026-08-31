@@ -1,51 +1,89 @@
 import { getAppId, getSocketURL } from '@/components/shared';
-import { website_name } from '@/utils/site-config';
-import DerivAPIBasic from '@deriv/deriv-api/dist/DerivAPIBasic';
 import { getInitialLanguage } from '@deriv-com/translations';
-import APIMiddleware from './api-middleware';
+import { getActiveOptionsAccount, getDerivNewToken, getOptionsWebSocketUrl } from '@/utils/deriv-new-api';
 
-export const generateDerivApiInstance = () => {
-    const cleanedServer = getSocketURL().replace(/[^a-zA-Z0-9.]/g, '');
-    const cleanedAppId = getAppId()?.replace?.(/[^a-zA-Z0-9]/g, '') ?? getAppId();
-    const socket_url = `wss://${cleanedServer}/websockets/v3?app_id=${cleanedAppId}&l=${getInitialLanguage()}&brand=${website_name.toLowerCase()}`;
-    const deriv_socket = new WebSocket(socket_url);
-    const deriv_api = new DerivAPIBasic({
-        connection: deriv_socket,
-        middleware: new APIMiddleware({}),
-    });
-    return deriv_api;
-};
+const PUBLIC_OPTIONS_WS = 'wss://api.derivws.com/trading/v1/options/ws/public';
 
-export const getLoginId = () => {
-    const login_id = localStorage.getItem('active_loginid');
-    if (login_id && login_id !== 'null') return login_id;
-    return null;
-};
+/**
+ * Creates the socket used by the Bot Forge API layer.
+ *
+ * Authenticated sessions obtain a fresh, account-specific OTP URL from the
+ * New Options API. Unauthenticated chart/public sessions use the public
+ * Options WebSocket. No legacy /websockets/v3 URL is used here.
+ */
+export const generateDerivApiInstance = async () => {
+    const token = getDerivNewToken();
+    let socket_url = PUBLIC_OPTIONS_WS;
 
-export const V2GetActiveToken = () => {
-    const token = localStorage.getItem('authToken');
-    if (token && token !== 'null') return token;
-    return null;
-};
-
-export const V2GetActiveClientId = () => {
-    const token = V2GetActiveToken();
-
-    if (!token) return null;
-    const account_list = JSON.parse(localStorage.getItem('accountsList'));
-    if (account_list && account_list !== 'null') {
-        const active_clientId = Object.keys(account_list).find(key => account_list[key] === token);
-        return active_clientId;
+    if (token) {
+        const account = getActiveOptionsAccount();
+        if (!account?.account_id) throw new Error('No active Deriv Options account is selected.');
+        socket_url = await getOptionsWebSocketUrl(account.account_id);
     }
-    return null;
-};
 
-export const getToken = () => {
-    const active_loginid = getLoginId();
-    const client_accounts = JSON.parse(localStorage.getItem('accountsList')) ?? undefined;
-    const active_account = (client_accounts && client_accounts[active_loginid]) || {};
+    const connection = new WebSocket(socket_url);
+    const listeners = new Set<(message: unknown) => void>();
+
+    connection.addEventListener('message', event => {
+        try {
+            listeners.forEach(listener => listener(JSON.parse(event.data)));
+        } catch {
+            // Ignore non-JSON socket frames.
+        }
+    });
+
+    const subscriptions = new Map<string, { unsubscribe: () => void }>();
+    let requestId = 0;
+
+    const send = (request: Record<string, unknown>) => {
+        const req_id = request.req_id ?? ++requestId;
+        const payload = { ...request, req_id };
+        connection.send(JSON.stringify(payload));
+
+        if (request.subscribe) {
+            const subscriptionId = `req-${req_id}`;
+            const subscription = {
+                id: subscriptionId,
+                unsubscribe: () => subscriptions.delete(subscriptionId),
+            };
+            subscriptions.set(subscriptionId, subscription);
+            return Promise.resolve({ subscription });
+        }
+        return Promise.resolve({});
+    };
+
     return {
-        token: active_account ?? undefined,
-        account_id: active_loginid ?? undefined,
+        connection,
+        send,
+        disconnect: () => connection.close(),
+        onMessage: () => ({
+            subscribe: (callback: (message: unknown) => void) => {
+                listeners.add(callback);
+                return { unsubscribe: () => listeners.delete(callback) };
+            },
+        }),
+        getSelfExclusion: async () => ({ error: { code: 'Unsupported' } }),
+        // Kept only as a compatibility-shaped method for code that expects an API object.
+        // Authentication is performed by the OTP URL, never by authorize().
+        authorize: async () => {
+            const account = getActiveOptionsAccount();
+            return { authorize: account, error: null };
+        },
     };
 };
+
+export const getLoginId = () => getActiveOptionsAccount()?.account_id ?? null;
+export const V2GetActiveToken = () => getDerivNewToken();
+export const V2GetActiveClientId = () => getActiveOptionsAccount()?.account_id ?? null;
+
+export const getToken = () => ({
+    token: getDerivNewToken() ?? undefined,
+    account_id: getActiveOptionsAccount()?.account_id ?? undefined,
+});
+
+// Retained for older callers that import these helpers; they no longer build a legacy socket.
+export const getLegacySocketConfig = () => ({
+    appId: getAppId(),
+    socket: getSocketURL(),
+    language: getInitialLanguage(),
+});
