@@ -13,7 +13,7 @@ class ChartAPI {
                 this.api.disconnect();
                 this.api.connection.removeEventListener('close', this.onsocketclose.bind(this));
             }
-            this.api = await generateDerivApiInstance();
+            this.api = await generateDerivApiInstance({ authenticated: false });
             this.api?.connection.addEventListener('close', this.onsocketclose.bind(this));
         }
         this.getTime();
@@ -28,11 +28,7 @@ class ChartAPI {
     }
 
     reconnectIfNotConnected = () => {
-        // eslint-disable-next-line no-console
-        console.log('chart connection state: ', this.api?.connection?.readyState);
-        if (this.api?.connection?.readyState && this.api?.connection?.readyState > 1) {
-            // eslint-disable-next-line no-console
-            console.log('Info: Chart connection to the server was closed, trying to reconnect.');
+        if (this.api?.connection?.readyState && this.api.connection.readyState > 1) {
             this.init(true);
         }
     };
