@@ -4,7 +4,7 @@
  */
 import React, { useEffect } from 'react';
 import Cookies from 'js-cookie';
-import { saveDerivNewToken } from './deriv-new-api';
+import { clearDerivNewSession, saveDerivNewToken } from './deriv-new-api';
 
 export interface OidcOptions {
     redirectCallbackUri?: string;
@@ -45,7 +45,6 @@ export const isDerivCallbackPage = (): boolean => {
     const hasOAuthResponse = ['code', 'error', 'error_description'].some(param =>
         new URLSearchParams(window.location.search).has(param),
     );
-
     return (
         pathname === '/callback' ||
         pathname.endsWith('/callback') ||
@@ -80,7 +79,6 @@ const exchangeAuthorizationCode = async (
     redirectUri: string,
 ): Promise<Record<string, string>> => {
     let tokenBody: Record<string, any>;
-
     if (window.location.origin === DERIV_PRODUCTION_ORIGIN) {
         const response = await fetch(DERIV_TOKEN_EXCHANGE_FUNCTION, {
             method: 'POST',
@@ -88,9 +86,7 @@ const exchangeAuthorizationCode = async (
             body: JSON.stringify({ code, code_verifier: verifier, redirect_uri: redirectUri }),
         });
         tokenBody = await response.json().catch(() => ({}));
-        if (!response.ok) {
-            throw new Error(tokenBody.error || `Sign-in exchange failed (${response.status}).`);
-        }
+        if (!response.ok) throw new Error(tokenBody.error || `Sign-in exchange failed (${response.status}).`);
     } else {
         const tokenResponse = await fetch(DERIV_TOKEN_URL, {
             method: 'POST',
@@ -109,17 +105,13 @@ const exchangeAuthorizationCode = async (
         }
     }
 
-    if (!tokenBody.access_token) {
-        throw new Error('The sign-in response did not include a New API access token.');
-    }
-
+    if (!tokenBody.access_token) throw new Error('The sign-in response did not include a New API access token.');
     saveDerivNewToken({
         access_token: tokenBody.access_token,
         expires_in: Number(tokenBody.expires_in) || undefined,
         token_type: tokenBody.token_type || 'Bearer',
     });
     Cookies.set('logged_state', 'true');
-
     return {
         access_token: String(tokenBody.access_token),
         expires_in: String(tokenBody.expires_in ?? ''),
@@ -132,12 +124,10 @@ export async function requestOidcAuthentication(options: OidcOptions = {}): Prom
     const verifier = generateRandomValue();
     const oauthState = generateRandomValue(32);
     const challenge = await createCodeChallenge(verifier);
-
     sessionStorage.setItem(PKCE_VERIFIER_KEY, verifier);
     sessionStorage.setItem(OAUTH_STATE_KEY, oauthState);
     sessionStorage.setItem(OAUTH_PAYLOAD_KEY, JSON.stringify(state ?? null));
     sessionStorage.setItem(OAUTH_REDIRECT_URI_KEY, redirectCallbackUri);
-
     const params = new URLSearchParams({
         response_type: 'code',
         client_id: DERIV_OAUTH_CLIENT_ID,
@@ -148,7 +138,6 @@ export async function requestOidcAuthentication(options: OidcOptions = {}): Prom
         code_challenge_method: 'S256',
         brand: 'deriv',
     });
-
     window.location.href = `${DERIV_AUTH_URL}?${params.toString()}`;
 }
 
@@ -159,7 +148,7 @@ export async function OAuth2Logout(options: OAuth2LogoutOptions = {}): Promise<v
     } catch {
         // ignore logout transport failures
     }
-
+    clearDerivNewSession();
     Cookies.set('logged_state', 'false');
     window.location.href = postLogoutRedirectUri;
 }
@@ -172,37 +161,30 @@ export const Callback: React.FC<CallbackProps> = ({ onSignInSuccess, renderRetur
     useEffect(() => {
         if (callbackStarted.current) return;
         callbackStarted.current = true;
-
         const completeSignIn = async () => {
             const params = new URLSearchParams(window.location.search);
             const oauthError = params.get('error_description') || params.get('error');
             if (oauthError) throw new Error(oauthError);
-
             const code = params.get('code');
             if (!code) throw new Error('No OAuth authorization code was received from Deriv.');
-
             const returnedState = params.get('state');
             const expectedState = sessionStorage.getItem(OAUTH_STATE_KEY);
             const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
             const redirectUri = sessionStorage.getItem(OAUTH_REDIRECT_URI_KEY) || getDerivRedirectUri();
-
             if (!returnedState || !expectedState || returnedState !== expectedState) {
                 throw new Error('The sign-in response could not be verified. Please try again.');
             }
             if (!verifier) throw new Error('The sign-in session expired. Please try again.');
-
             let rawState: unknown = null;
             try {
                 rawState = JSON.parse(sessionStorage.getItem(OAUTH_PAYLOAD_KEY) || 'null');
             } catch {
                 rawState = null;
             }
-
             const tokens = await exchangeAuthorizationCode(code, verifier, redirectUri);
             await onSignInSuccess?.(tokens, rawState);
             setStatus('success');
         };
-
         completeSignIn()
             .catch((err: unknown) => {
                 console.error('[Callback] New API sign-in error:', err);
@@ -217,13 +199,7 @@ export const Callback: React.FC<CallbackProps> = ({ onSignInSuccess, renderRetur
             });
     }, [onSignInSuccess]);
 
-    if (status === 'loading') {
-        return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif' }}><div>Completing sign in…</div></div>;
-    }
-
-    if (status === 'error') {
-        return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', gap: 16 }}><div style={{ color: '#e44' }}>Sign in error: {errorMsg}</div>{renderReturnButton?.()}</div>;
-    }
-
+    if (status === 'loading') return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif' }}><div>Completing sign in…</div></div>;
+    if (status === 'error') return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', gap: 16 }}><div style={{ color: '#e44' }}>Sign in error: {errorMsg}</div>{renderReturnButton?.()}</div>;
     return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif' }}><div>Sign in successful. Redirecting…</div></div>;
 };
