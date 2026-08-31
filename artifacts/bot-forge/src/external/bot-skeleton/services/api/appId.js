@@ -4,15 +4,14 @@ import { getActiveOptionsAccount, getDerivNewToken, getOptionsWebSocketUrl } fro
 const PUBLIC_OPTIONS_WS = 'wss://api.derivws.com/trading/v1/options/ws/public';
 
 /**
- * Creates the Bot Forge API client on the current Deriv Options WebSocket.
+ * Creates the Bot Forge API client on a current Deriv Options WebSocket.
  * Authenticated sessions obtain a fresh account-specific OTP URL from the
- * New API. Public sessions use the New API public endpoint.
+ * New API. Public sessions always use the unauthenticated public endpoint.
  */
-export const generateDerivApiInstance = async () => {
-    const token = getDerivNewToken();
+export const generateDerivApiInstance = async ({ authenticated = true } = {}) => {
     let socket_url = PUBLIC_OPTIONS_WS;
 
-    if (token) {
+    if (authenticated && getDerivNewToken()) {
         const account = getActiveOptionsAccount();
         if (!account?.account_id) throw new Error('No active Deriv Options account is selected.');
         socket_url = await getOptionsWebSocketUrl(account.account_id);
