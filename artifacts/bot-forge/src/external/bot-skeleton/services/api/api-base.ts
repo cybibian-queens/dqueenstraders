@@ -172,7 +172,6 @@ class APIBase {
                 const subscription = this.api?.send({
                     [streamName]: 1,
                     subscribe: 1,
-                    ...(streamName === 'balance' ? { account: 'all' } : {}),
                 });
                 if (subscription) this.current_auth_subscriptions.push(subscription);
                 return subscription;
