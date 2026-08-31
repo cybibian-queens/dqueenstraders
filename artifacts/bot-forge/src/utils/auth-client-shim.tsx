@@ -1,7 +1,6 @@
 /**
- * Shim for @deriv-com/auth-client using Deriv OAuth 2.0 + PKCE.
- * The app keeps this compatibility surface while the trading layer migrates
- * from the Legacy Deriv API to the New API.
+ * Deriv OAuth 2.0 + PKCE authentication shim.
+ * This surface now uses only the supported New API OAuth flow.
  */
 import React, { useEffect } from 'react';
 import Cookies from 'js-cookie';
@@ -12,7 +11,6 @@ export interface OidcOptions {
     postLoginRedirectUri?: string;
     postLogoutRedirectUri?: string;
     state?: unknown;
-    login_code?: string;
 }
 
 export interface OAuth2LogoutOptions {
@@ -32,10 +30,6 @@ const DERIV_PRODUCTION_ORIGIN = 'https://dqueenstraders.netlify.app';
 const DERIV_TOKEN_EXCHANGE_FUNCTION = '/.netlify/functions/deriv-oauth-token';
 const DERIV_OAUTH_CLIENT_ID =
     (window as any).__DERIV_OAUTH_CLIENT_ID__ || '33Tz0wxIDfb62ywDERsKo';
-// Optional during the migration period. This is only sent to Deriv's OAuth
-// authorization endpoint so Deriv can route legacy users appropriately. It is
-// never exchanged for legacy account tokens by DQueens.
-const DERIV_LEGACY_APP_ID = (window as any).__DERIV_APP_ID__ || '36300';
 const PKCE_VERIFIER_KEY = 'deriv.oauth.pkce_verifier';
 const OAUTH_STATE_KEY = 'deriv.oauth.state';
 const OAUTH_PAYLOAD_KEY = 'deriv.oauth.payload';
@@ -91,11 +85,7 @@ const exchangeAuthorizationCode = async (
         const response = await fetch(DERIV_TOKEN_EXCHANGE_FUNCTION, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                code,
-                code_verifier: verifier,
-                redirect_uri: redirectUri,
-            }),
+            body: JSON.stringify({ code, code_verifier: verifier, redirect_uri: redirectUri }),
         });
         tokenBody = await response.json().catch(() => ({}));
         if (!response.ok) {
@@ -138,7 +128,7 @@ const exchangeAuthorizationCode = async (
 };
 
 export async function requestOidcAuthentication(options: OidcOptions = {}): Promise<void> {
-    const { redirectCallbackUri = getDerivRedirectUri(), state, login_code } = options;
+    const { redirectCallbackUri = getDerivRedirectUri(), state } = options;
     const verifier = generateRandomValue();
     const oauthState = generateRandomValue(32);
     const challenge = await createCodeChallenge(verifier);
@@ -159,9 +149,6 @@ export async function requestOidcAuthentication(options: OidcOptions = {}): Prom
         brand: 'deriv',
     });
 
-    if (DERIV_LEGACY_APP_ID) params.set('app_id', DERIV_LEGACY_APP_ID);
-    if (login_code) params.set('login_code', login_code);
-
     window.location.href = `${DERIV_AUTH_URL}?${params.toString()}`;
 }
 
@@ -173,13 +160,6 @@ export async function OAuth2Logout(options: OAuth2LogoutOptions = {}): Promise<v
         // ignore logout transport failures
     }
 
-    localStorage.removeItem('accountsList');
-    localStorage.removeItem('clientAccounts');
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('active_loginid');
-    localStorage.removeItem('deriv.new_api.access_token');
-    localStorage.removeItem('deriv.new_api.token_expiry');
-    localStorage.removeItem('deriv.new_api.active_account');
     Cookies.set('logged_state', 'false');
     window.location.href = postLogoutRedirectUri;
 }
@@ -204,8 +184,7 @@ export const Callback: React.FC<CallbackProps> = ({ onSignInSuccess, renderRetur
             const returnedState = params.get('state');
             const expectedState = sessionStorage.getItem(OAUTH_STATE_KEY);
             const verifier = sessionStorage.getItem(PKCE_VERIFIER_KEY);
-            const redirectUri =
-                sessionStorage.getItem(OAUTH_REDIRECT_URI_KEY) || getDerivRedirectUri();
+            const redirectUri = sessionStorage.getItem(OAUTH_REDIRECT_URI_KEY) || getDerivRedirectUri();
 
             if (!returnedState || !expectedState || returnedState !== expectedState) {
                 throw new Error('The sign-in response could not be verified. Please try again.');
@@ -239,25 +218,12 @@ export const Callback: React.FC<CallbackProps> = ({ onSignInSuccess, renderRetur
     }, [onSignInSuccess]);
 
     if (status === 'loading') {
-        return (
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif' }}>
-                <div>Completing sign in…</div>
-            </div>
-        );
+        return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif' }}><div>Completing sign in…</div></div>;
     }
 
     if (status === 'error') {
-        return (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', gap: 16 }}>
-                <div style={{ color: '#e44' }}>Sign in error: {errorMsg}</div>
-                {renderReturnButton?.()}
-            </div>
-        );
+        return <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif', gap: 16 }}><div style={{ color: '#e44' }}>Sign in error: {errorMsg}</div>{renderReturnButton?.()}</div>;
     }
 
-    return (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif' }}>
-            <div>Sign in successful. Redirecting…</div>
-        </div>
-    );
+    return <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', fontFamily: 'sans-serif' }}><div>Sign in successful. Redirecting…</div></div>;
 };
