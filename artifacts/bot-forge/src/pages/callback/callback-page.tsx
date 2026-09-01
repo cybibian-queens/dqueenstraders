@@ -27,7 +27,7 @@ const CallbackPage = () => {
                 });
 
                 const accountParam = selected?.account_type === 'demo' ? 'demo' : (selected?.currency || 'USD');
-                window.location.replace(window.location.origin + `/bot/?account=${encodeURIComponent(accountParam)}`);
+                window.location.replace(window.location.origin + `/?account=${encodeURIComponent(accountParam)}`);
             }}
             renderReturnButton={() => (
                 <Button
