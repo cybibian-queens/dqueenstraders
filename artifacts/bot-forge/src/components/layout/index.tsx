@@ -9,6 +9,7 @@ import { useOfflineDetection } from '@/hooks/useOfflineDetection';
 import { useStore } from '@/hooks/useStore';
 import useTMB from '@/hooks/useTMB';
 import { getDerivRedirectUri, isDerivCallbackPage } from '@/utils/auth-client-shim';
+import { getActiveOptionsAccount, getDerivNewToken } from '@/utils/deriv-new-api';
 import { handleOidcAuthFailure } from '@/utils/auth-utils';
 import { requestOidcAuthentication } from '@deriv-com/auth-client';
 import { useDevice } from '@deriv-com/ui';
@@ -38,15 +39,16 @@ const Layout = observer(() => {
     const currency = getQueryParams.get('account') ?? '';
     const accountsList = JSON.parse(localStorage.getItem('accountsList') ?? '{}');
     const isClientAccountsPopulated = Object.keys(accountsList).length > 0;
+    const newApiAuthenticated = Boolean(getDerivNewToken() && getActiveOptionsAccount()?.account_id);
     const ifClientAccountHasCurrency =
+        newApiAuthenticated ||
         Object.values(checkClientAccount).some((account: any) => account.currency === currency) ||
         currency === 'demo' ||
         currency === '';
     const [clientHasCurrency, setClientHasCurrency] = useState(ifClientAccountHasCurrency);
-    const [isAuthenticating, setIsAuthenticating] = useState(true); // Start with true to prevent flashing
-    const authEffectRan = useRef(false); // guard against re-running the auth effect
+    const [isAuthenticating, setIsAuthenticating] = useState(true);
+    const authEffectRan = useRef(false);
 
-    // Expose setClientHasCurrency to window for global access
     useEffect(() => {
         (window as any).setClientHasCurrency = setClientHasCurrency;
 
@@ -67,10 +69,7 @@ const Layout = observer(() => {
             const account_list_filter = account_list.filter((acc: any) => acc.is_disabled === 0);
             api_accounts.push(account_list_filter || []);
             const allCurrencies = new Set(Object.values(checkClientAccount).map((acc: any) => acc.currency));
-
-            // Skip disabled accounts when checking for missing currency
             const accounts = api_accounts.flat();
-            // eslint-disable-next-line @typescript-eslint/no-unused-vars
             let detected_currency = '';
             const hasMissingCurrency = accounts.some(data => {
                 if (!allCurrencies.has(data.currency)) {
@@ -89,7 +88,6 @@ const Layout = observer(() => {
                 if (acc.loginid && !accountsList[acc.loginid]) {
                     hasMissingToken = true;
                     missingTokenCurrency = acc.currency || '';
-                    // Store the missing token's currency in session storage
                     if (missingTokenCurrency) {
                         sessionStorage.setItem('query_param_currency', missingTokenCurrency);
                     }
@@ -124,7 +122,6 @@ const Layout = observer(() => {
 
     useEffect(() => {
         if (isCurrencyValid && api_base.api) {
-            // Subscribe to the onMessage event
             const is_valid_currency = currency && validCurrencies.includes(currency.toUpperCase());
             if (!is_valid_currency) return;
             subscription = api_base.api.onMessage().subscribe(validateApiAccounts);
@@ -132,43 +129,35 @@ const Layout = observer(() => {
     }, []);
 
     useEffect(() => {
-        // Run once only — re-runs on dep changes cause infinite setState loops (React 19)
         if (authEffectRan.current) return;
         authEffectRan.current = true;
 
-        // Always set the currency in session storage, even if the user is not logged in
-        // This ensures the currency is available on the callback page
         if (currency) {
             sessionStorage.setItem('query_param_currency', currency);
         }
 
-        const checkOIDCEnabledWithMissingAccount = !isEndpointPage && !isCallbackPage && !clientHasCurrency;
+        const checkOIDCEnabledWithMissingAccount =
+            !newApiAuthenticated && !isEndpointPage && !isCallbackPage && !clientHasCurrency;
         const shouldAuthenticate =
-            (isLoggedInCookie && !isClientAccountsPopulated && !isEndpointPage && !isCallbackPage) ||
-            checkOIDCEnabledWithMissingAccount;
+            !newApiAuthenticated &&
+            ((isLoggedInCookie && !isClientAccountsPopulated && !isEndpointPage && !isCallbackPage) ||
+                checkOIDCEnabledWithMissingAccount);
 
-        // Skip authentication when offline
         if (!isOnline) {
             console.log('[Layout] Offline detected, skipping authentication');
             setIsAuthenticating(false);
-            setClientHasCurrency(true); // Allow access in offline mode
+            setClientHasCurrency(true);
             return;
         }
 
-        // Create an async IIFE to handle authentication
         (async () => {
             try {
-                // First, explicitly wait for TMB status to be determined
-                // This ensures we have the correct TMB status before proceeding
                 const tmbEnabled = await isTmbEnabled();
 
-                // Now use the result of the explicit check
                 if (tmbEnabled) {
                     await onRenderTMBCheck();
                 } else if (shouldAuthenticate) {
-                    const query_param_currency = currency || sessionStorage.getItem('query_param_currency') || 'USD';
-
-                    // Make sure we have the currency in session storage before redirecting
+                    const query_param_currency = currency || sessionStorage.getItem('query_param_currency') || '';
                     if (query_param_currency) {
                         sessionStorage.setItem('query_param_currency', query_param_currency);
                     }
@@ -189,7 +178,6 @@ const Layout = observer(() => {
                     }
                 }
             } catch (err) {
-                // eslint-disable-next-line no-console
                 setIsAuthenticating(false);
                 console.error('Authentication error:', err);
             } finally {
@@ -206,10 +194,10 @@ const Layout = observer(() => {
         onRenderTMBCheck,
         currency,
         is_tmb_enabled,
-        isOnline, // Add isOnline to dependencies
+        isOnline,
+        newApiAuthenticated,
     ]);
 
-    // Add offline timeout to prevent infinite authentication
     useEffect(() => {
         if (!isOnline && isAuthenticating) {
             console.log('[Layout] Setting offline timeout for authentication');
@@ -218,38 +206,21 @@ const Layout = observer(() => {
                 setIsAuthenticating(false);
                 setClientHasCurrency(true);
             }, 2000);
-
             return () => clearTimeout(timeout);
         }
     }, [isOnline, isAuthenticating]);
 
-    // Add a state to track if initial authentication check is complete
-    const [isInitialAuthCheckComplete, setIsInitialAuthCheckComplete] = useState(false);
-
-    // Effect to mark initial auth check as complete after a short delay
-    useEffect(() => {
-        if (!isAuthenticating && !isInitialAuthCheckComplete) {
-            // Wait a bit to ensure all state updates have propagated
-            const timer = setTimeout(() => {
-                setIsInitialAuthCheckComplete(true);
-            }, 500); // Give it enough time to stabilize
-
-            return () => clearTimeout(timer);
-        }
-    }, [isAuthenticating, isInitialAuthCheckComplete]);
+    if (isAuthenticating) {
+        return <div className='layout-loader'>Please wait while we connect to the server...</div>;
+    }
 
     return (
-        <div
-            className={clsx('layout', {
-                responsive: isDesktop,
-                'quick-strategy-active': is_quick_strategy_active && !isDesktop,
-            })}
-        >
-            {!isCallbackPage && <AppHeader isAuthenticating={isAuthenticating || !isInitialAuthCheckComplete} />}
-            <Body>
+        <div className={clsx('layout', { 'layout--desktop': isDesktop })}>
+            <AppHeader />
+            <main className='layout__content'>
                 <Outlet />
-            </Body>
-            {!isCallbackPage && isDesktop && <Footer />}
+            </main>
+            {!is_quick_strategy_active && <Footer />}
             <PWAUpdateNotification />
         </div>
     );
