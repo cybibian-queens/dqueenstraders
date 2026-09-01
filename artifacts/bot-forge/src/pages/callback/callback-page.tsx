@@ -14,9 +14,13 @@ const CallbackPage = () => {
                 }
 
                 const requested = String(state?.account || '').toLowerCase();
-                const preferred = requested === 'real'
-                    ? accounts.find(account => account.account_type === 'real' && account.status === 'active')
-                    : accounts.find(account => account.account_type === 'demo' && account.status === 'active');
+                const preferred = requested === 'demo'
+                    ? accounts.find(account => account.account_type === 'demo' && account.status === 'active')
+                    : requested === 'real'
+                        ? accounts.find(account => account.account_type === 'real' && account.status === 'active')
+                        : accounts.find(account => account.account_type === 'real' && account.status === 'active') ||
+                          accounts.find(account => account.account_type === 'demo' && account.status === 'active');
+
                 const selected = preferred || getActiveOptionsAccount() || accounts.find(account => account.status === 'active') || accounts[0];
 
                 if (selected) setActiveOptionsAccount(selected);
@@ -24,6 +28,7 @@ const CallbackPage = () => {
                 console.info('[Deriv New API] OAuth session initialized', {
                     accountCount: accounts.length,
                     activeAccount: selected?.account_id,
+                    accountType: selected?.account_type,
                 });
 
                 const accountParam = selected?.account_type === 'demo' ? 'demo' : (selected?.currency || 'USD');
