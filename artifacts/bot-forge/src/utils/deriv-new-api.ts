@@ -11,6 +11,7 @@ export const DERIV_NEW_APP_ID =
     '';
 
 const ACTIVE_ACCOUNT_KEY = 'deriv.new_api.active_account';
+const SESSION_KEY = 'deriv.new_api.session';
 let sessionToken: string | null = null;
 let sessionTokenExpiry = 0;
 
@@ -32,12 +33,40 @@ export interface DerivOptionsAccount {
 interface AccountsResponse { data?: DerivOptionsAccount[]; errors?: Array<{ message?: string }> }
 interface OtpResponse { data?: { url?: string }; errors?: Array<{ message?: string }> }
 
+const restoreSession = (): void => {
+    try {
+        const raw = sessionStorage.getItem(SESSION_KEY);
+        if (!raw) return;
+        const saved = JSON.parse(raw) as { access_token?: string; expires_at?: number };
+        if (!saved.access_token) return;
+        if (saved.expires_at && Date.now() >= saved.expires_at) {
+            sessionStorage.removeItem(SESSION_KEY);
+            return;
+        }
+        sessionToken = saved.access_token;
+        sessionTokenExpiry = saved.expires_at || 0;
+    } catch {
+        sessionStorage.removeItem(SESSION_KEY);
+    }
+};
+
+restoreSession();
+
 export const saveDerivNewToken = (token: DerivNewToken): void => {
     sessionToken = token.access_token;
     sessionTokenExpiry = token.expires_in ? Date.now() + token.expires_in * 1000 : 0;
+    try {
+        sessionStorage.setItem(
+            SESSION_KEY,
+            JSON.stringify({ access_token: sessionToken, expires_at: sessionTokenExpiry || undefined })
+        );
+    } catch {
+        // Keep the in-memory token if sessionStorage is unavailable.
+    }
 };
 
 export const getDerivNewToken = (): string | null => {
+    if (!sessionToken) restoreSession();
     if (!sessionToken) return null;
     if (sessionTokenExpiry && Date.now() >= sessionTokenExpiry) {
         clearDerivNewSession();
@@ -49,6 +78,7 @@ export const getDerivNewToken = (): string | null => {
 export const clearDerivNewSession = (): void => {
     sessionToken = null;
     sessionTokenExpiry = 0;
+    sessionStorage.removeItem(SESSION_KEY);
     sessionStorage.removeItem(ACTIVE_ACCOUNT_KEY);
 };
 

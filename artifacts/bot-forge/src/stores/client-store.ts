@@ -31,13 +31,11 @@ export default class ClientStore {
     all_accounts_balance: Balance | null = null;
     is_logging_out = false;
 
-    // TODO: fix with self exclusion
     updateSelfExclusion = () => {};
 
     private authDataSubscription: { unsubscribe: () => void } | null = null;
 
     constructor() {
-        // Subscribe to auth data changes
         this.authDataSubscription = authData$.subscribe(authData => {
             if (authData?.upgradeable_landing_companies) {
                 this.setUpgradeableLandingCompanies(authData.upgradeable_landing_companies);
@@ -117,7 +115,7 @@ export default class ClientStore {
         const mt_gaming_shortcode = mt_gaming_company?.financial.shortcode || mt_gaming_company?.swap_free.shortcode;
         const is_current_mf = this.landing_company_shortcode === 'maltainvest';
         return (
-            is_current_mf || //is_currently logged in mf account via tradershub
+            is_current_mf ||
             (financial_shortcode || gaming_shortcode || mt_gaming_shortcode
                 ? (eu_shortcode_regex.test(financial_shortcode) && gaming_shortcode !== 'svg') ||
                   eu_shortcode_regex.test(gaming_shortcode)
@@ -139,23 +137,17 @@ export default class ClientStore {
     }
 
     get should_show_eu_error() {
-        if (!this.is_landing_company_loaded) {
-            return false;
-        }
+        if (!this.is_landing_company_loaded) return false;
         return this.is_eu && !this.is_low_risk;
     }
 
     get landing_company_shortcode() {
-        if (this.accounts[this.loginid]) {
-            return this.accounts[this.loginid].landing_company_name;
-        }
+        if (this.accounts[this.loginid]) return this.accounts[this.loginid].landing_company_name;
         return undefined;
     }
 
     get residence() {
-        if (this.is_logged_in) {
-            return this.account_settings?.country_code ?? '';
-        }
+        if (this.is_logged_in) return this.account_settings?.country_code ?? '';
         return '';
     }
 
@@ -168,7 +160,6 @@ export default class ClientStore {
     }
 
     get is_eu_or_multipliers_only() {
-        // Check whether account is multipliers only and if the account is from eu countries
         return !this.is_multipliers_only ? !isEuCountry(this.residence) : !this.is_multipliers_only;
     }
 
@@ -188,10 +179,7 @@ export default class ClientStore {
         const { is_logged_in, landing_companies, residence, is_landing_company_loaded } = this;
         if (is_landing_company_loaded) {
             const { financial_company, gaming_company } = landing_companies ?? {};
-
-            //this is a conditional check for countries like Australia/Norway which fulfills one of these following conditions
             const restricted_countries = financial_company?.shortcode === 'svg' || gaming_company?.shortcode === 'svg';
-
             if (!is_logged_in) return '';
             if (!gaming_company?.shortcode && financial_company?.shortcode === 'maltainvest') {
                 if (this.is_virtual) return ContentFlag.EU_DEMO;
@@ -204,14 +192,11 @@ export default class ClientStore {
                 if (this.is_eu) return ContentFlag.LOW_RISK_CR_EU;
                 return ContentFlag.LOW_RISK_CR_NON_EU;
             } else if (
-                ((financial_company?.shortcode === 'svg' && gaming_company?.shortcode === 'svg') ||
-                    restricted_countries) &&
+                ((financial_company?.shortcode === 'svg' && gaming_company?.shortcode === 'svg') || restricted_countries) &&
                 !this.is_virtual
             ) {
                 return ContentFlag.HIGH_RISK_CR;
             }
-
-            // Default Check
             if (isEuCountry(residence)) {
                 if (this.is_virtual) return ContentFlag.EU_DEMO;
                 return ContentFlag.EU_REAL;
@@ -231,13 +216,10 @@ export default class ClientStore {
 
     get account_open_date() {
         if (isEmptyObject(this.accounts) || !this.accounts[this.loginid]) return undefined;
-        return Object.keys(this.accounts[this.loginid]).includes('created_at')
-            ? this.accounts[this.loginid].created_at
-            : undefined;
+        return Object.keys(this.accounts[this.loginid]).includes('created_at') ? this.accounts[this.loginid].created_at : undefined;
     }
 
     isBotAllowed = () => {
-        // Stop showing Bot, DBot, DSmartTrader for logged out EU IPs
         if (!this.is_logged_in && this.is_eu_country) return false;
         const is_mf = this.landing_company_shortcode === 'maltainvest';
         return this.is_virtual ? this.is_eu_or_multipliers_only : !is_mf && !this.is_options_blocked;
@@ -268,13 +250,23 @@ export default class ClientStore {
     };
 
     getCurrency = () => {
-        const clientAccounts = JSON.parse(localStorage.getItem('clientAccounts') ?? '{}');
-        return clientAccounts[this.loginid]?.currency ?? '';
+        const accountCurrency = this.accounts[this.loginid]?.currency;
+        if (accountCurrency) return accountCurrency;
+        try {
+            const clientAccounts = JSON.parse(localStorage.getItem('clientAccounts') ?? '{}');
+            return clientAccounts[this.loginid]?.currency ?? this.currency ?? '';
+        } catch {
+            return this.currency ?? '';
+        }
     };
 
     getToken = () => {
-        const accountList = JSON.parse(localStorage.getItem('accountsList') ?? '{}');
-        return accountList[this.loginid] ?? '';
+        try {
+            const accountList = JSON.parse(localStorage.getItem('accountsList') ?? '{}');
+            return accountList[this.loginid] ?? '';
+        } catch {
+            return '';
+        }
     };
 
     setAccountStatus(status: GetAccountStatus | undefined) {
@@ -284,9 +276,7 @@ export default class ClientStore {
     setAccountSettings(settings: GetSettings | undefined) {
         try {
             const is_equal_settings = JSON.stringify(settings) === JSON.stringify(this.account_settings);
-            if (!is_equal_settings) {
-                this.account_settings = settings;
-            }
+            if (!is_equal_settings) this.account_settings = settings;
         } catch (error) {
             console.error('setAccountSettings error', error);
         }
@@ -295,7 +285,6 @@ export default class ClientStore {
     updateTncStatus(landing_company_shortcode: string, status: number) {
         try {
             if (!this.account_settings) return;
-
             const updated_settings = {
                 ...this.account_settings,
                 tnc_status: {
@@ -303,7 +292,6 @@ export default class ClientStore {
                     [landing_company_shortcode]: status,
                 },
             };
-
             this.setAccountSettings(updated_settings);
         } catch (error) {
             console.error('updateTncStatus error', error);
@@ -332,7 +320,6 @@ export default class ClientStore {
     };
 
     logout = async () => {
-        // reset all the states
         this.account_list = [];
         this.account_status = undefined;
         this.account_settings = undefined;
@@ -342,9 +329,7 @@ export default class ClientStore {
         this.loginid = '';
         this.balance = '0';
         this.currency = 'USD';
-
         this.is_landing_company_loaded = false;
-
         this.all_accounts_balance = null;
 
         localStorage.removeItem('active_loginid');
@@ -356,16 +341,12 @@ export default class ClientStore {
         setIsAuthorized(false);
         setAccountList([]);
         setAuthData(null);
-
         this.setIsLoggingOut(false);
-
         Analytics.reset();
 
-        // disable livechat
         window.LC_API?.close_chat?.();
         window.LiveChatWidget?.call('hide');
 
-        // shutdown and initialize intercom
         if (window.Intercom) {
             window.Intercom('shutdown');
             window.DerivInterCom.initialize({
@@ -375,11 +356,8 @@ export default class ClientStore {
         }
 
         const resolveNavigation = () => {
-            if (window.history.length > 1) {
-                history.back();
-            } else {
-                window.location.replace('/');
-            }
+            if (window.history.length > 1) history.back();
+            else window.location.replace('/');
         };
         return api_base?.api
             ?.logout()

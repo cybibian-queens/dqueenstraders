@@ -133,6 +133,19 @@ class APIBase {
             if (!active) throw new Error('No active Deriv Options account is selected.');
 
             const selected = accounts.find(account => account.account_id === active.account_id) || active;
+            const normalizedAccounts = accounts.map(account => ({
+                loginid: account.account_id,
+                account_category: 'trading',
+                account_type: account.account_type,
+                broker: 'deriv',
+                created_at: 0,
+                balance: String(account.balance ?? 0),
+                currency: account.currency,
+                is_disabled: account.status !== 'active',
+                is_virtual: account.account_type === 'demo',
+                landing_company_name: undefined,
+            })) as unknown as TAuthData['account_list'];
+
             this.token = getDerivNewToken() || '';
             this.account_id = selected.account_id;
             this.account_info = {
@@ -140,10 +153,10 @@ class APIBase {
                 balance: selected.balance,
                 currency: selected.currency,
                 account_type: selected.account_type,
-                account_list: accounts,
+                account_list: normalizedAccounts,
             } as unknown as TAuthData;
 
-            setAccountList(accounts as unknown as TAuthData['account_list']);
+            setAccountList(normalizedAccounts);
             setAuthData(this.account_info as TAuthData);
             setIsAuthorized(true);
             this.is_authorized = true;
