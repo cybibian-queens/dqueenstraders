@@ -2,11 +2,13 @@
  * Utility functions for authentication-related operations
  */
 import Cookies from 'js-cookie';
+import { clearDerivNewSession } from '@/utils/deriv-new-api';
 
 /**
  * Clears authentication data from local storage and reloads the page
  */
 export const clearAuthData = (is_reload: boolean = true): void => {
+    clearDerivNewSession();
     localStorage.removeItem('accountsList');
     localStorage.removeItem('clientAccounts');
     localStorage.removeItem('callback_token');
@@ -28,7 +30,8 @@ export const handleOidcAuthFailure = (error: any): void => {
     // Log the error
     console.error('OIDC authentication failed:', error);
 
-    // Clear auth data
+    // Clear both current New API session and any stale legacy auth artifacts.
+    clearDerivNewSession();
     localStorage.removeItem('authToken');
     localStorage.removeItem('active_loginid');
     localStorage.removeItem('clientAccounts');
