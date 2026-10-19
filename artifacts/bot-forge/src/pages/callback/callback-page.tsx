@@ -1,4 +1,4 @@
-import { Callback } from '@deriv-com/auth-client';
+import { Callback } from '@/utils/auth-client-shim';
 import { Button } from '@deriv-com/ui';
 import { initializeDerivNewSession, getActiveOptionsAccount, setActiveOptionsAccount } from '@/utils/deriv-new-api';
 
