@@ -13,7 +13,7 @@ import useTMB from '@/hooks/useTMB';
 import { clearAuthData, handleOidcAuthFailure } from '@/utils/auth-utils';
 import { getDerivRedirectUri } from '@/utils/auth-client-shim';
 import { StandaloneCircleUserRegularIcon } from '@deriv/quill-icons/Standalone';
-import { requestOidcAuthentication } from '@deriv-com/auth-client';
+import { requestOidcAuthentication } from '@/utils/auth-client-shim';
 import { Localize, useTranslations } from '@deriv-com/translations';
 import { Header, useDevice, Wrapper } from '@deriv-com/ui';
 import { Tooltip } from '@deriv-com/ui';
