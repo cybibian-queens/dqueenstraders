@@ -11,7 +11,7 @@ import useTMB from '@/hooks/useTMB';
 import { getDerivRedirectUri, isDerivCallbackPage } from '@/utils/auth-client-shim';
 import { getActiveOptionsAccount, getDerivNewToken } from '@/utils/deriv-new-api';
 import { handleOidcAuthFailure } from '@/utils/auth-utils';
-import { requestOidcAuthentication } from '@deriv-com/auth-client';
+import { requestOidcAuthentication } from '@/utils/auth-client-shim';
 import { useDevice } from '@deriv-com/ui';
 import { crypto_currencies_display_order, fiat_currencies_display_order } from '../shared';
 import Footer from './footer';
